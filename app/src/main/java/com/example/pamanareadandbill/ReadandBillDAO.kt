@@ -87,3 +87,34 @@ interface WaterRatesDao {
     @Query("DELETE FROM WaterRates")
     fun deleteAllWaterRates(): Int
 }
+
+@Dao
+interface MeterReadingDao {
+    //---------------------------------------------------------
+    // Meter Reading related queries
+    //---------------------------------------------------------
+    @Insert
+    suspend fun insertMeterReading(meterReading: MeterReading)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMeterReading(meterReading: List<MeterReading>)
+
+    @Query("SELECT * FROM MeterReading ORDER BY srvc_nmbr, read_date")
+    fun getAllMeterReading(): Flow<List<MeterReading>>
+
+    @Query("SELECT * FROM MeterReading WHERE srvc_nmbr = :srvc_nmbr LIMIT 1")
+    suspend fun getMeterReading(srvc_nmbr: String): MeterReading?
+
+    @Query("UPDATE MeterReading SET pres_rdng = :pres_rdng, " +
+            "consume = :consume, " +
+            "peso_value = :peso_value, " +
+            "field_findings = :findings, " +
+            "remarks = :remarks " +
+            "WHERE srvc_nmbr = :srvc_nmbr")
+    suspend fun updateMeterReading(srvc_nmbr: String, pres_rdng: Int, consume: Int, peso_value: Double,
+            findings: String, remarks: String)
+
+    @Query("DELETE FROM MeterReading")
+    suspend fun deleteAllMeterReading(): Int
+
+}

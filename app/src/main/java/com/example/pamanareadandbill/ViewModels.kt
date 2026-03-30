@@ -49,6 +49,9 @@ class CustomerViewModel : ViewModel() {
     fun loadCustomers(db: AppDatabase) {
         viewModelScope.launch {
             customers = db.customerDao().getCustomers()
+            if(customers.isNotEmpty()) {
+                loadReadings(this@CustomerViewModel, db)
+            }
         }
     }
 

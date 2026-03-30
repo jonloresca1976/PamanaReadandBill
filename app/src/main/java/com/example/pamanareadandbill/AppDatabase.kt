@@ -12,7 +12,7 @@ import androidx.room.RoomDatabase
         FieldFindings::class,
         ReadHistory::class,
         ProxAlerts::class],
-    version = 4
+    version = 5
 )
 
 abstract class AppDatabase : RoomDatabase() {
@@ -23,6 +23,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun findingsDao(): FindingsDao
 
     abstract fun waterRatesDao(): WaterRatesDao
+
+    abstract fun meterReadingDao(): MeterReadingDao
 }
 
 

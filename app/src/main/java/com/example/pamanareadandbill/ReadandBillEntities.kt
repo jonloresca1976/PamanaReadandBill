@@ -42,7 +42,7 @@ data class MeterReading(
     val pres_rdng: Int,
     val consume: Int,
     val peso_value: Double,
-    val amt_rr: Double,
+    val amt_arr: Double,
     val prev_arr: Double,
     val amt_others: Double,
     val field_findings: String,

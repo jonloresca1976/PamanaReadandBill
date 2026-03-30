@@ -41,6 +41,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -59,6 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pamanareadandbill.ui.theme.PamanaReadandBillTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.max
 
@@ -107,6 +109,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
 
     val context = LocalContext.current
     val db = DatabaseProvider.getDatabase(context)
+    val scope = rememberCoroutineScope()
 
     var name by rememberSaveable { mutableStateOf("") }
     var address by rememberSaveable { mutableStateOf("") }
@@ -122,6 +125,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
     //var remarks by rememberSaveable { mutableStateOf("") }        // moved to ViewModel
     var expanded by rememberSaveable { mutableStateOf(false) }
     var showDialog by rememberSaveable { mutableStateOf(false) }
+    var showSaveConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var returnedValue by rememberSaveable { mutableStateOf("") }
     var itemToSearch by rememberSaveable { mutableStateOf("") }
     // var custIndex by rememberSaveable { mutableStateOf(0) }      // moved to ViewModel
@@ -189,6 +193,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
             else -> "None"
         }
         prevReading = customers[index].prev_rdng
+
     }
 
     Surface(
@@ -306,8 +311,8 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     onClick = {
                         val r = reading.toIntOrNull() ?: 0
                         val cons = r - prevReading
-                        viewModel.updateConsumption(cons.toString())
-                        computeValue(cons, accountNumber, viewModel)
+                        viewModel.updateConsumption(cons.toString()) // Update ViewModel
+                        computeValue(cons, customers[index].acct_nmbr, viewModel) // Update ViewModel
                     },
                     modifier = Modifier.weight(1f)
                 ) {
@@ -472,6 +477,9 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     onClick = {
                         viewModel.previous()
                         clearFields(viewModel)
+                        scope.launch {
+                            loadReadings(viewModel, db)
+                        }
                     },
                     enabled = index > 0,
                     modifier = Modifier.weight(1f)
@@ -479,7 +487,12 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     Text("<<")
                 }
                 Button(
-                    onClick = {},
+                    onClick = {
+                        scope.launch {
+                            saveReading(viewModel, db)
+                            showSaveConfirmDialog = true
+                        }
+                    },
                     modifier = Modifier.weight(1f)
                 ) {
                     //Text(text = "Save", fontSize = 12.sp)
@@ -502,12 +515,28 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     onClick = {
                         viewModel.next()
                         clearFields(viewModel)
+                        scope.launch {
+                            loadReadings(viewModel, db)
+                        }
                     },
                     enabled = index < customers.size - 1,
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(">>")
                 }
+            }
+
+            if (showSaveConfirmDialog) {
+                AlertDialog(
+                    onDismissRequest = { showSaveConfirmDialog = false },
+                    title = { Text("Save Reading") },
+                    text = { Text("Reading successfully saved.") },
+                    confirmButton = {
+                        TextButton(onClick = { showSaveConfirmDialog = false }) {
+                            Text("OK")
+                        }
+                    }
+                )
             }
 
         }
