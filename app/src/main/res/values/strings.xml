@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">PamanaReadandBill</string>
+
+    <!-- MENU ITEM TEXTS-->
+    <string name="mit_meter_reading">Meter Reading Entry</string>
+    <string name="mit_data">Upload/Download Data</string>
+    <string name="mit_backup_restore">Backup/Restore</string>
+    <string name="mit_reports">Reports</string>
+    <string name="mit_settings">Settings</string>
+    <string name="mit_printer">Printer</string>
+
+    <!-- TITLE BAR TEXTS-->
+    <string name="tb_dashboard">MAIN MENU</string>
+    <string name="tb_meter_reading">Meter Reading Entry</string>
+    <string name="tb_data">Upload/Download Data</string>
+    <string name="tb_backup_restore">Backup/Restore</string>
+    <string name="tb_reports">Reports</string>
+    <string name="tb_settings">Settings</string>
+    <string name="tb_printer">Printer</string>
+</resources>
