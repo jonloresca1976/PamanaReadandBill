@@ -130,6 +130,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
     var returnedValue by rememberSaveable { mutableStateOf("") }
     var itemToSearch by rememberSaveable { mutableStateOf("") }
     // var custIndex by rememberSaveable { mutableStateOf(0) }      // moved to ViewModel
+    var averagePrefix by rememberSaveable { mutableStateOf("") }
 
     /*val  fieldFindings = listOf(
         "                ",
@@ -299,6 +300,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     value = reading,
                     onValueChange = {
                         viewModel.updateReading(it) // Update ViewModel
+                        averagePrefix = ""
                     },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number
@@ -319,7 +321,13 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     Text( text = "Compute", fontSize = 14.sp)
                 }
                 Button(
-                    onClick = {},
+                    onClick = {
+                        val r = prevReading + customers[index].average
+                        viewModel.updateReading(r.toString()) // Update ViewModel
+                        viewModel.updateConsumption(customers[index].average.toString()) // Update ViewModel
+                        computeValue(customers[index].average, customers[index].acct_nmbr, viewModel) // Update ViewModel
+                        averagePrefix = "AVG - "
+                    },
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(text = "Average", fontSize = 14.sp)
@@ -343,7 +351,10 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     modifier = Modifier.weight(1f)
                 )
                 Button(
-                    onClick = {},
+                    onClick = {
+                        computeValue(consumption.toIntOrNull() ?: 0, customers[index].acct_nmbr, viewModel)
+                        averagePrefix = "AVGP - "
+                    },
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(text = "Compute", fontSize = 14.sp)
@@ -421,8 +432,6 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                 )
             }
 
-            //remarks = returnedValue
-
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded }
@@ -447,7 +456,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                         DropdownMenuItem(
                             text = { Text(finding.finding_desc) },
                             onClick = {
-                                viewModel.updateSelectedFinding(finding.finding_desc) // Update ViewModel
+                                viewModel.updateSelectedFinding(averagePrefix + finding.finding_desc) // Update ViewModel
                                 expanded = false
                             }
                         )
