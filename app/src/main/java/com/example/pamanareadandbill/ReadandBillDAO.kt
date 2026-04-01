@@ -93,7 +93,7 @@ interface MeterReadingDao {
     //---------------------------------------------------------
     // Meter Reading related queries
     //---------------------------------------------------------
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMeterReading(meterReading: MeterReading)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

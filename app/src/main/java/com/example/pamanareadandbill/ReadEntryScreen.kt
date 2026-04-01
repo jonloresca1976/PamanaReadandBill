@@ -126,6 +126,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     var showDialog by rememberSaveable { mutableStateOf(false) }
     var showSaveConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var showOverwriteDialog by rememberSaveable { mutableStateOf(false) }
     var returnedValue by rememberSaveable { mutableStateOf("") }
     var itemToSearch by rememberSaveable { mutableStateOf("") }
     // var custIndex by rememberSaveable { mutableStateOf(0) }      // moved to ViewModel
@@ -193,7 +194,6 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
             else -> "None"
         }
         prevReading = customers[index].prev_rdng
-
     }
 
     Surface(
@@ -489,8 +489,15 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                 Button(
                     onClick = {
                         scope.launch {
-                            saveReading(viewModel, db)
-                            showSaveConfirmDialog = true
+                            val exists = withContext(Dispatchers.IO) {
+                                db.meterReadingDao().getMeterReading(customers[index].srvc_nmbr) != null
+                            }
+                            if (exists) {
+                                showOverwriteDialog = true
+                            } else {
+                                saveReading(viewModel, db)
+                                showSaveConfirmDialog = true
+                            }
                         }
                     },
                     modifier = Modifier.weight(1f)
@@ -539,6 +546,30 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                 )
             }
 
+            if (showOverwriteDialog) {
+                AlertDialog(
+                    onDismissRequest = { showOverwriteDialog = false },
+                    title = { Text("Overwrite Reading") },
+                    text = { Text("Reading already exists. Overwrite?") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            scope.launch {
+                                saveReading(viewModel, db)
+                                showSaveConfirmDialog = true
+                                showOverwriteDialog = false
+                            }
+                        }
+                        ) {
+                            Text("OK")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showOverwriteDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
         }
     }
 }

@@ -64,43 +64,39 @@ fun computeValue(cons: Int, acctNmbr: String, viewModel: CustomerViewModel) {
                     ((cons - rate.high_lim4) * rate.amt5)
         }
     }
-    viewModel.updateValue(value.toString())
+    //viewModel.updateValue(value.toString())
+    viewModel.updateValue(String.format("%.2f", value))
 }
 
 suspend fun saveReading(viewModel: CustomerViewModel, db: AppDatabase) {
     withContext(Dispatchers.IO) {
         val currentCustomer = viewModel.customers[viewModel.currentIndex]
         var readingData = db.meterReadingDao().getMeterReading(currentCustomer.srvc_nmbr)
-        
-        if (readingData == null) {
-            readingData = MeterReading(
-                srvc_nmbr = currentCustomer.srvc_nmbr,
-                read_date = "2026-03-01", // TODO: Add real date later
-                prev_rdng = currentCustomer.prev_rdng,
-                pres_rdng = viewModel.reading.toIntOrNull() ?: 0,
-                consume = viewModel.consumption.toIntOrNull() ?: 0,
-                peso_value = viewModel.pesoValue.toDoubleOrNull() ?: 0.0,
-                amt_arr = currentCustomer.amt_arr,
-                prev_arr = 0.00,
-                amt_others = currentCustomer.amt_misc +
-                        currentCustomer.amt_mat +
-                        currentCustomer.amt_pdv +
-                        currentCustomer.amt_aro,
-                field_findings = viewModel.selectedFinding,
-                remarks = viewModel.remarks,
-                reader = "JONATHAN",
-                numb_tries = 0,
-                numb_print = 0,
-                read_time = "2026-03-01",
-                read_loc = " ",
-                loc_update = " ",
-                device_id = "ABC123 "
-            )
-            db.meterReadingDao().insertMeterReading(readingData!!)
-        } else {
-            // Already exists - maybe update? For now just keeping it as is to match previous behavior
-            // where it just shows the dialog.
-        }
+
+        readingData = MeterReading(
+            srvc_nmbr = currentCustomer.srvc_nmbr,
+            read_date = "2026-03-01", // TODO: Add real date later
+            prev_rdng = currentCustomer.prev_rdng,
+            pres_rdng = viewModel.reading.toIntOrNull() ?: 0,
+            consume = viewModel.consumption.toIntOrNull() ?: 0,
+            peso_value = viewModel.pesoValue.toDoubleOrNull() ?: 0.0,
+            amt_arr = currentCustomer.amt_arr,
+            prev_arr = 0.00,
+            amt_others = currentCustomer.amt_misc +
+                    currentCustomer.amt_mat +
+                    currentCustomer.amt_pdv +
+                    currentCustomer.amt_aro,
+            field_findings = viewModel.selectedFinding,
+            remarks = viewModel.remarks,
+            reader = "JONATHAN",
+            numb_tries = 0,
+            numb_print = 0,
+            read_time = "2026-03-01",
+            read_loc = " ",
+            loc_update = " ",
+            device_id = "ABC123 "
+        )
+        db.meterReadingDao().insertMeterReading(readingData!!)
     }
 }
 
@@ -112,7 +108,8 @@ suspend fun loadReadings(viewModel: CustomerViewModel, db: AppDatabase) {
         if (readingData != null) {
             viewModel.updateReading(readingData?.pres_rdng.toString())
             viewModel.updateConsumption(readingData?.consume.toString())
-            viewModel.updateValue(readingData?.peso_value.toString())
+            //viewModel.updateValue(readingData?.peso_value.toString())
+            viewModel.updateValue(String.format("%.2f", readingData?.peso_value))
             viewModel.updateSelectedFinding(readingData?.field_findings.toString())
             viewModel.updateRemarks(readingData?.remarks.toString())
         }
