@@ -27,7 +27,7 @@ fun clearFields(viewModel: CustomerViewModel) {
     viewModel.updateReading("")
     viewModel.updateConsumption("")
     viewModel.updateValue("")
-    viewModel.updateSelectedFinding("                ")
+    viewModel.updateSelectedFinding("")
     viewModel.updateRemarks("")
 }
 

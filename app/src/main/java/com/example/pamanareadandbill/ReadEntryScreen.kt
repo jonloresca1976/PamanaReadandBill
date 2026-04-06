@@ -127,7 +127,9 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
     var showSaveConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var showOverwriteDialog by rememberSaveable { mutableStateOf(false) }
+    var showErrorDialog by rememberSaveable { mutableStateOf(false) }
     var returnedValue by rememberSaveable { mutableStateOf("") }
+    var errorDesc by rememberSaveable { mutableStateOf("") }
     var itemToSearch by rememberSaveable { mutableStateOf("") }
     // var custIndex by rememberSaveable { mutableStateOf(0) }      // moved to ViewModel
     var averagePrefix by rememberSaveable { mutableStateOf("") }
@@ -486,6 +488,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     onClick = {
                         viewModel.previous()
                         clearFields(viewModel)
+                        averagePrefix=""
                         scope.launch {
                             loadReadings(viewModel, db)
                         }
@@ -501,12 +504,22 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                             val exists = withContext(Dispatchers.IO) {
                                 db.meterReadingDao().getMeterReading(customers[index].srvc_nmbr) != null
                             }
+                            //val errorEncountered = averagePrefix != "" && selectedFinding == ""
+                            val isUsingAverage = averagePrefix.isNotEmpty()
+                            // Check if finding is empty, blank, or matches your default "empty" string
+                            val noFindingSelected = selectedFinding.trim().isEmpty() || selectedFinding == "                "
+                            if (isUsingAverage && noFindingSelected) {
+                                errorDesc = "Please select a finding"
+                                showErrorDialog = true
+                                return@launch // Exit the coroutine
+                            }
                             if (exists) {
                                 showOverwriteDialog = true
                             } else {
                                 saveReading(viewModel, db)
                                 showSaveConfirmDialog = true
                             }
+
                         }
                     },
                     modifier = Modifier.weight(1f)
@@ -531,6 +544,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     onClick = {
                         viewModel.next()
                         clearFields(viewModel)
+                        averagePrefix=""
                         scope.launch {
                             loadReadings(viewModel, db)
                         }
@@ -579,6 +593,20 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     }
                 )
             }
+
+            if (showErrorDialog) {
+                AlertDialog(
+                    onDismissRequest = { showErrorDialog = false },
+                    title = { Text("Error Encountered") },
+                    text = { Text(errorDesc) },
+                    confirmButton = {
+                        TextButton(onClick = { showErrorDialog = false }) {
+                            Text("OK")
+                        }
+                    }
+                )
+            }
+
         }
     }
 }
