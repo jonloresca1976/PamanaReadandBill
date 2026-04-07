@@ -45,6 +45,7 @@ class CustomerViewModel : ViewModel() {
     fun updateValue(value: String) { pesoValue = value }
     fun updateSelectedFinding(value: String) { selectedFinding = value }
     fun updateRemarks(value: String) { remarks = value }
+    fun moveTo(value: Int) { currentIndex = value}
 
     fun loadCustomers(db: AppDatabase) {
         viewModelScope.launch {

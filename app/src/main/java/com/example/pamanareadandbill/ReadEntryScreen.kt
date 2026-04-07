@@ -1,6 +1,7 @@
 package com.example.pamanareadandbill
 
 import android.R
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -74,7 +75,7 @@ fun ReadEntryScreen(navController: NavController) {
 @Composable
 fun ReadingTab(navController: NavController) {
     var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("Reading", "History", "Location", "Picture")
+    val tabs = listOf("Reading", "History", "Preview", "Loc/Picture")
 
     val viewModel: CustomerViewModel = viewModel()
 
@@ -97,8 +98,8 @@ fun ReadingTab(navController: NavController) {
         when (selectedTabIndex) {
             0 -> ReadingTabContent(viewModel)
             1 -> HistoryTabContent(viewModel)
-            2 -> LocationTabContent()
-            3 -> PictureTabContent()
+            2 -> PreviewTabContent()
+            3 -> LocationTabContent()
         }
     }
 }
@@ -418,21 +419,55 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                 }
             }
 
+            //-------------------------------------------------------------------------
+            // A dialog box used for searching a customer, by name, meter, or position
+            //-------------------------------------------------------------------------
             if (showDialog) {
-
                 InputDialog(
-
                     onDismiss = {
                         showDialog = false
                     },
-
                     onConfirm = { value ->
                         returnedValue = value   // RECEIVE VALUE
+                        if (itemToSearch == "Position") {
+                            val pos = returnedValue.toIntOrNull() ?: 0
+                            if (pos >= 1 && pos <= customers.size) {
+                                viewModel.moveTo(returnedValue.toInt() - 1)
+                            } else {
+                                Toast.makeText(context, "Invalid position", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        if (itemToSearch == "Name"){
+                            val searchResult = viewModel.customers.indexOfFirst {
+                                it.cssr_name.contains(returnedValue, ignoreCase = true)
+                            }
+                            if (searchResult != -1) {
+                                viewModel.moveTo(searchResult)
+                            } else {
+                                Toast.makeText(context, "Customer not found", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        if (itemToSearch == "Meter"){
+                            val searchResult = viewModel.customers.indexOfFirst {
+                                it.mtr_info.contains(returnedValue, ignoreCase = true)
+                            }
+                            if (searchResult != -1) {
+                                viewModel.moveTo(searchResult)
+                            } else {
+                                Toast.makeText(context, "Meter not found", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                         showDialog = false
+                        clearFields(viewModel)
+                        averagePrefix=""
+                        scope.launch {
+                            loadReadings(viewModel, db)
+                        }
                     },
                     searchItem = itemToSearch
                 )
             }
+            //-------------------------------------------------------------------------
 
             ExposedDropdownMenuBox(
                 expanded = expanded,
@@ -504,7 +539,9 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                             val exists = withContext(Dispatchers.IO) {
                                 db.meterReadingDao().getMeterReading(customers[index].srvc_nmbr) != null
                             }
-                            //val errorEncountered = averagePrefix != "" && selectedFinding == ""
+                            //----------------------------------------------------------------------------
+                            // When using average consumption, check if the user selected a finding
+                            // If he did not, show an error message, and don't proceed with saving
                             val isUsingAverage = averagePrefix.isNotEmpty()
                             // Check if finding is empty, blank, or matches your default "empty" string
                             val noFindingSelected = selectedFinding.trim().isEmpty() || selectedFinding == "                "
@@ -513,6 +550,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                                 showErrorDialog = true
                                 return@launch // Exit the coroutine
                             }
+                            //----------------------------------------------------------------------------
                             if (exists) {
                                 showOverwriteDialog = true
                             } else {
@@ -724,6 +762,11 @@ fun HistoryCard(history: ReadHistory) {
             Text("${history.remarks}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(30f))
         }
     }
+}
+
+@Composable
+fun PreviewTabContent() {
+    Text("Preview Tab Content")
 }
 
 @Composable
