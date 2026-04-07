@@ -2,6 +2,7 @@ package com.example.pamanareadandbill
 
 import android.R
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.paddingFromBaseline
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -48,7 +51,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -56,6 +64,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -98,7 +108,7 @@ fun ReadingTab(navController: NavController) {
         when (selectedTabIndex) {
             0 -> ReadingTabContent(viewModel)
             1 -> HistoryTabContent(viewModel)
-            2 -> PreviewTabContent()
+            2 -> PreviewTabContent(viewModel)
             3 -> LocationTabContent()
         }
     }
@@ -765,8 +775,275 @@ fun HistoryCard(history: ReadHistory) {
 }
 
 @Composable
-fun PreviewTabContent() {
-    Text("Preview Tab Content")
+fun PreviewTabContent(viewModel: CustomerViewModel) {
+    //Text("Preview Tab Content")
+    if (viewModel.reading.isBlank() || viewModel.consumption.isBlank() || viewModel.pesoValue.isBlank()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Please enter and compute a reading to see the preview.")
+        }
+        return
+    }
+    val index = viewModel.currentIndex
+    val customer = viewModel.customers[index]
+    val referenceNo = "007" + customer.srvc_nmbr.substring(0, 8)
+    val rawAcct = customer.acct_nmbr
+    val formattedAcct = if (rawAcct.length >= 13) {
+        "${rawAcct.substring(0, 3)}-${rawAcct.substring(3, 6)}-${rawAcct.substring(6,10)}-${rawAcct.substring(10, 12)}-${rawAcct.substring(12)}"
+    } else {
+        rawAcct
+    }
+    val scNumber = customer.srvc_nmbr.substring(0, 8) + "-" + customer.srvc_nmbr.substring(8)
+    val vat = viewModel.pesoValue.toDouble() * 0.12
+    val subTotal = viewModel.pesoValue.toDouble() + vat
+    val penalty = subTotal * 0.10
+    var runningTotal = 0.00
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp) // Margin around the paper
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
+            color = Color.White,
+            shape = RectangleShape,
+            shadowElevation = 4.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                // ----- LOGO -----
+                Image(
+                    painter = painterResource(id = com.example.pamanareadandbill.R.drawable.dcwd_pamana_logo_small),
+                    contentDescription = "Logo",
+                    modifier = Modifier
+                        .height(80.dp) // Reduced height from 200.dp
+                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally),
+                    contentScale = ContentScale.Fit, // Ensures aspect ratio is maintained within the box
+                    colorFilter = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+                )
+
+                // ----- HEADER -----
+                Text(
+                    text = "PAMANA WATER CORPORATION",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                Text(
+                    text = "Dagupan City",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                Text(
+                    text = "Tel. Nos.: 653-2229/0917-8428653",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                Text(
+                    text = "TIN# 009-089-959-002",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "STATEMENT OF ACCOUNT",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                Text(
+                    text = "FOR THE MONTH OF: MARCH 2026",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = customer.cssr_name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier
+                        .graphicsLayer(
+                            scaleY = 2f,
+                            scaleX = 1f,
+                            transformOrigin = TransformOrigin(0.5f, 0.5f)
+                        )
+                )
+                Text(
+                    text = customer.cssr_addr,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                )
+                Text(
+                    text = "Reference # : $referenceNo",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+                Text(
+                    text = "Acct.     # : $formattedAcct",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+                Text(
+                    text = "Srvc.Conn.# : $scNumber",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+                Text(
+                    "-".repeat(32),
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+                Text(
+                    text = "Meter. Nmbr : ${customer.mtr_info}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+                Text(
+                    text = "Date From   : ${customer.date_from}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+                Text(
+                    text = "Date To     : 04/03/2026",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+                Text(
+                    "-".repeat(32),
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+                ReceiptRow("Present Reading: ", viewModel.reading)
+                ReceiptRow("Previous Reading: ", customer.prev_rdng.toString())
+                ReceiptRow("Consumption: ", viewModel.consumption)
+                Text(
+                    "-".repeat(32),
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+                ReceiptRow("Basic Charge: ", "%,.2f".format(viewModel.pesoValue.toDouble()))
+                ReceiptRow("Add 12% VAT: ", "%,.2f".format(vat))
+                ReceiptRow("Sub-Total: ", "%,.2f".format(subTotal), isBold = true)
+                runningTotal = runningTotal + subTotal
+                if (customer.amt_arr != 0.0) {
+                    ReceiptRow("Curr. Arrears : ", "%,.2f".format(customer.amt_arr))
+                    runningTotal = runningTotal + customer.amt_arr
+                }
+                if (customer.prev_arr > 0.00) {
+                    ReceiptRow("Prev. Arrears: ", "%,.2f".format(customer.prev_arr))
+                    runningTotal = runningTotal + customer.prev_arr
+                }
+                if(customer.amt_mat > 0) {
+                    ReceiptRow("Materials: ", "%,.2f".format(customer.amt_mat))
+                    runningTotal = runningTotal + customer.amt_mat
+                }
+                if (customer.amt_misc > 0) {
+                    ReceiptRow("Misc: ", "%,.2f".format(customer.amt_misc))
+                    runningTotal = runningTotal + customer.amt_misc
+                }
+                if (customer.amt_pdv > 0 ) {
+                    ReceiptRow("PDV: ", "%,.2f".format(customer.amt_pdv))
+                    runningTotal = runningTotal + customer.amt_pdv
+                }
+                Text(
+                    "-".repeat(32),
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+                ReceiptRow("TOTAL CHARGES: ", "%,.2f".format(runningTotal), isBold = true, isDoubleHeight = true)
+                Text(
+                    "TOTAL AFTER",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+                ReceiptRow("03/18/2026:", "%,.2f".format(runningTotal + penalty))
+                Text("=".repeat(32), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                ReceiptRow("Meter Reader: ", "GRANDY DECIPULO")  // TODO : Add actual reader name
+                ReceiptRow("Remarks:", viewModel.selectedFinding)
+                Text(
+                    text = "Tue, 3 Mar 2026 11:02:19",                         // TODO : Add actual date and time stamp
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                Text(
+                    text = "DEVICE SN: R58M22FWZDD",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                Text("=".repeat(32), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                Text (
+                    text = "PLEASE SETTLE YOUR BALANCE " +
+                           "ON OR BEFORE 03/18/2026 " +
+                           "TO AVOID DISCONNECTION",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+                Text("=".repeat(32), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                Text(
+                    text = "Payments accepted at Perez, City Hall, " +
+                           "and Tambac offices. As well as at " +
+                           "Queen Bank, 7-Eleven, GCash, and other " +
+                           "ECPay outlets.",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                Text("-".repeat(32), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+                Text (
+                    text = "PAALALA: INGATAN PO ANG BILL NA ITO. " +
+                           "This is NOT VALID as and OFFICIAL RECEIPT. " +
+                           "Disregard arrears if payment was made.",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+fun ReceiptRow(
+    label: String,
+    value: String,
+    isBold: Boolean = false,
+    isDoubleHeight: Boolean = false
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = if (isDoubleHeight) {
+                Modifier.graphicsLayer(scaleY = 2f, transformOrigin = TransformOrigin(0f, 0.5f))
+            } else Modifier
+        )
+        Text(
+            text = value,
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.End,
+            modifier = if (isDoubleHeight) {
+                Modifier.graphicsLayer(scaleY = 2f, transformOrigin = TransformOrigin(1f, 0.5f))
+            } else Modifier
+        )
+    }
 }
 
 @Composable
@@ -846,5 +1123,13 @@ fun HistoryTabContentPreview() {
 
     PamanaReadandBillTheme() {
         //HistoryTabContent(viewModel)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewTabContentPreview() {
+    PamanaReadandBillTheme() {
+        //PreviewTabContent()
     }
 }
