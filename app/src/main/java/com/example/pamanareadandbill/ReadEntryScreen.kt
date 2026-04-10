@@ -523,13 +523,14 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                                         .show()
                                 }
                             }
-                            showDialog = false
+                            //showDialog = false
                             clearFields(viewModel)
                             averagePrefix = ""
                             scope.launch {
                                 loadReadings(viewModel, db)
                             }
                         }
+                        showDialog = false
                     },
                     searchItem = itemToSearch
                 )
@@ -639,7 +640,9 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     )
                 }
                 Button(
-                    onClick = {},
+                    onClick = {
+                        samplePrint(context)
+                    },
                     modifier = Modifier.weight(1f)
                 ) {
                     //Text(text = "Print", fontSize = 12.sp)
