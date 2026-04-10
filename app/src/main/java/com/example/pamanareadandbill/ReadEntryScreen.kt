@@ -130,6 +130,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
     var status by rememberSaveable { mutableStateOf("") }
     var scDisc by rememberSaveable { mutableStateOf("") }
     var prevReading by rememberSaveable { mutableStateOf(0) }
+    var average by rememberSaveable { mutableStateOf(0) }
     //var reading by rememberSaveable { mutableStateOf("") }        // moved to ViewModel
     //var consumption by rememberSaveable { mutableStateOf("") }    // moved to ViewModel
     var value by rememberSaveable { mutableStateOf("") }
@@ -144,6 +145,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
     var itemToSearch by rememberSaveable { mutableStateOf("") }
     // var custIndex by rememberSaveable { mutableStateOf(0) }      // moved to ViewModel
     var averagePrefix by rememberSaveable { mutableStateOf("") }
+    var pendingNavigation by rememberSaveable {mutableStateOf<(() -> Unit)?>(null)}
 
     /*val  fieldFindings = listOf(
         "                ",
@@ -177,6 +179,15 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
         }
     }
 
+    val navigateWithWarning = { action: () -> Unit ->
+        if(viewModel.isModified) {
+            pendingNavigation = action // Trigger the dialog
+        } else {
+            action() // Navigates immediately
+        }
+
+    }
+
     val fieldFindings = viewModel.findings
 
     val customers = viewModel.customers
@@ -208,6 +219,8 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
             else -> "None"
         }
         prevReading = customers[index].prev_rdng
+        average = customers[index].average
+        viewModel.loadHistory(db)
     }
 
     Surface(
@@ -287,7 +300,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "P/R: $prevReading",
+                    text = "P/R: $prevReading    AVG: $average/${viewModel.averageLast3}",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier
                         .weight(1f)
@@ -325,9 +338,29 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                 Button(
                     onClick = {
                         val r = reading.toIntOrNull() ?: 0
-                        val cons = r - prevReading
-                        viewModel.updateConsumption(cons.toString()) // Update ViewModel
-                        computeValue(cons, customers[index].acct_nmbr, viewModel) // Update ViewModel
+                        var cons = 0
+                        if (r > prevReading) {
+                            cons = r - prevReading
+                            viewModel.updateConsumption(cons.toString()) // Update ViewModel
+                            computeValue(
+                                cons,
+                                customers[index].acct_nmbr,
+                                viewModel
+                            ) // Update ViewModel
+                        } else {
+                            errorDesc = "Present reading must be greater than previous reading"
+                            showErrorDialog = true
+                        }
+                        when (getConsumptionTrend(cons, viewModel.averageLast3)) {
+                            "increase" -> {
+                                errorDesc = "Consumption has increased by 30%."
+                                showErrorDialog = true
+                            }
+                            "decrease" -> {
+                                errorDesc = "Consumption has decreased by 30%."
+                                showErrorDialog = true
+                            }
+                        }
                     },
                     modifier = Modifier.weight(1f)
                 ) {
@@ -367,6 +400,16 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     onClick = {
                         computeValue(consumption.toIntOrNull() ?: 0, customers[index].acct_nmbr, viewModel)
                         averagePrefix = "AVGP - "
+                        when (getConsumptionTrend(consumption.toIntOrNull() ?: 0, viewModel.averageLast3)) {
+                            "increase" -> {
+                                errorDesc = "Consumption has increased by 30%."
+                                showErrorDialog = true
+                            }
+                            "decrease" -> {
+                                errorDesc = "Consumption has decreased by 30%."
+                                showErrorDialog = true
+                            }
+                        }
                     },
                     modifier = Modifier.weight(1f)
                 ) {
@@ -531,11 +574,14 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
             ) {
                 Button(
                     onClick = {
-                        viewModel.previous()
-                        clearFields(viewModel)
-                        averagePrefix=""
-                        scope.launch {
-                            loadReadings(viewModel, db)
+                        navigateWithWarning {
+                            viewModel.previous()
+                            clearFields(viewModel)
+                            averagePrefix = ""
+                            scope.launch {
+                                viewModel.loadHistory(db)
+                                loadReadings(viewModel, db)
+                            }
                         }
                     },
                     enabled = index > 0,
@@ -594,6 +640,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                         clearFields(viewModel)
                         averagePrefix=""
                         scope.launch {
+                            viewModel.loadHistory(db)
                             loadReadings(viewModel, db)
                         }
                     },
@@ -691,6 +738,10 @@ fun HistoryTabContent(viewModel: CustomerViewModel) {
     }
 
     val rdhistory = viewModel.history
+
+    val lastThreeConsumptions = rdhistory
+        .takeLast(3)
+        .map { it.consume }
 
     Surface(
         shape = MaterialTheme.shapes.medium,

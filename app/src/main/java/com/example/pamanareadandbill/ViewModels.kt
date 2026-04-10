@@ -38,13 +38,28 @@ class CustomerViewModel : ViewModel() {
     var pesoValue by mutableStateOf("")
     var selectedFinding by mutableStateOf("                ")
     var remarks by mutableStateOf("")
+    var averageLast3 by mutableStateOf(0)
+    var isModified by mutableStateOf(false)
 
     // Add a function to update the reading
-    fun updateReading(value: String) { reading = value }
-    fun updateConsumption(value: String) { consumption = value }
+    fun updateReading(value: String) {
+        reading = value
+        isModified = true
+    }
+    fun updateConsumption(value: String) {
+        consumption = value
+        isModified = true
+    }
     fun updateValue(value: String) { pesoValue = value }
-    fun updateSelectedFinding(value: String) { selectedFinding = value }
-    fun updateRemarks(value: String) { remarks = value }
+    fun updateSelectedFinding(value: String) {
+        selectedFinding = value
+        isModified = true
+    }
+    fun updateRemarks(value: String) {
+        remarks = value
+        isModified = true
+    }
+    fun updateAverageLast3(value: Int) { averageLast3 = value }
     fun moveTo(value: Int) { currentIndex = value}
 
     fun loadCustomers(db: AppDatabase) {
@@ -59,6 +74,12 @@ class CustomerViewModel : ViewModel() {
     fun loadHistory(db: AppDatabase) {
         viewModelScope.launch {
             history = db.historyDao().getHistory(customers[currentIndex].srvc_nmbr.substring(0, 8))
+            val last3 = history.takeLast(3)
+            if (last3.isNotEmpty()) {
+                averageLast3 =  last3.map{it.consume}.average().toInt()
+            } else {
+                averageLast3 = 0
+            }
         }
     }
 

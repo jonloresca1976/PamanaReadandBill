@@ -97,6 +97,7 @@ suspend fun saveReading(viewModel: CustomerViewModel, db: AppDatabase) {
             device_id = "ABC123 "
         )
         db.meterReadingDao().insertMeterReading(readingData!!)
+        viewModel.isModified = false
     }
 }
 
@@ -112,7 +113,20 @@ suspend fun loadReadings(viewModel: CustomerViewModel, db: AppDatabase) {
             viewModel.updateValue(String.format("%.2f", readingData?.peso_value))
             viewModel.updateSelectedFinding(readingData?.field_findings.toString())
             viewModel.updateRemarks(readingData?.remarks.toString())
+            viewModel.isModified = false
         }
+    }
+}
 
+fun getConsumptionTrend(current: Int, average: Int): String {
+    if (average <= 0) return "normal" // Prevent division by zero or issues with no history
+
+    val increaseThreshold = average * 1.30
+    val decreaseThreshold = average * 0.70
+
+    return when {
+        current > increaseThreshold -> "increase"
+        current < decreaseThreshold -> "decrease"
+        else -> "normal"
     }
 }
