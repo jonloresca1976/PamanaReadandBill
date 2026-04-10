@@ -113,8 +113,8 @@ suspend fun loadReadings(viewModel: CustomerViewModel, db: AppDatabase) {
             viewModel.updateValue(String.format("%.2f", readingData?.peso_value))
             viewModel.updateSelectedFinding(readingData?.field_findings.toString())
             viewModel.updateRemarks(readingData?.remarks.toString())
-            viewModel.isModified = false
         }
+        viewModel.isModified = false
     }
 }
 

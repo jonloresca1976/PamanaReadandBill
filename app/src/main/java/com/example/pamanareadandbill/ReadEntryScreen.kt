@@ -145,7 +145,8 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
     var itemToSearch by rememberSaveable { mutableStateOf("") }
     // var custIndex by rememberSaveable { mutableStateOf(0) }      // moved to ViewModel
     var averagePrefix by rememberSaveable { mutableStateOf("") }
-    var pendingNavigation by rememberSaveable {mutableStateOf<(() -> Unit)?>(null)}
+    var pendingNavigation by rememberSaveable {mutableStateOf<(() -> Unit)?>(null)}  // allows the app to suspend navigation
+                                                                                             // when changes are not yet saved
 
     /*val  fieldFindings = listOf(
         "                ",
@@ -179,14 +180,19 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
         }
     }
 
+    //--------------------------------------------------------
+    // A function that triggers a warning if the user tries
+    //   to navigate away from the current customer without
+    //   saving the changes.
+    //--------------------------------------------------------
     val navigateWithWarning = { action: () -> Unit ->
         if(viewModel.isModified) {
             pendingNavigation = action // Trigger the dialog
         } else {
             action() // Navigates immediately
         }
-
     }
+    //---------------------------------------------------------
 
     val fieldFindings = viewModel.findings
 
@@ -485,7 +491,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                         if (itemToSearch == "Position") {
                             val pos = returnedValue.toIntOrNull() ?: 0
                             if (pos >= 1 && pos <= customers.size) {
-                                viewModel.moveTo(returnedValue.toInt() - 1)
+                                navigateWithWarning{ viewModel.moveTo(returnedValue.toInt() - 1) }
                             } else {
                                 Toast.makeText(context, "Invalid position", Toast.LENGTH_SHORT).show()
                             }
@@ -495,7 +501,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                                 it.cssr_name.contains(returnedValue, ignoreCase = true)
                             }
                             if (searchResult != -1) {
-                                viewModel.moveTo(searchResult)
+                                navigateWithWarning{ viewModel.moveTo(searchResult) }
                             } else {
                                 Toast.makeText(context, "Customer not found", Toast.LENGTH_SHORT).show()
                             }
@@ -505,7 +511,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                                 it.mtr_info.contains(returnedValue, ignoreCase = true)
                             }
                             if (searchResult != -1) {
-                                viewModel.moveTo(searchResult)
+                                navigateWithWarning{ viewModel.moveTo(searchResult) }
                             } else {
                                 Toast.makeText(context, "Meter not found", Toast.LENGTH_SHORT).show()
                             }
@@ -636,12 +642,14 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                 }
                 Button(
                     onClick = {
-                        viewModel.next()
-                        clearFields(viewModel)
-                        averagePrefix=""
-                        scope.launch {
-                            viewModel.loadHistory(db)
-                            loadReadings(viewModel, db)
+                        navigateWithWarning {
+                            viewModel.next()
+                            clearFields(viewModel)
+                            averagePrefix = ""
+                            scope.launch {
+                                viewModel.loadHistory(db)
+                                loadReadings(viewModel, db)
+                            }
                         }
                     },
                     enabled = index < customers.size - 1,
@@ -697,6 +705,31 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     confirmButton = {
                         TextButton(onClick = { showErrorDialog = false }) {
                             Text("OK")
+                        }
+                    }
+                )
+            }
+
+            if (pendingNavigation !=null) {
+                AlertDialog(
+                    onDismissRequest = { pendingNavigation = null },
+                    title = { Text("Unsaved Changes") },
+                    text = { Text("You have unsaved changes for this customer. Do you want to discard them and continue?") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                val action = pendingNavigation
+                                pendingNavigation = null
+                                viewModel.resetModified() // You'll need to add this to your ViewModel
+                                action?.invoke() // Execute the navigation action (next, previous, or search)
+                            }
+                        ) {
+                            Text("Discard")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { pendingNavigation = null }) {
+                            Text("Cancel")
                         }
                     }
                 )

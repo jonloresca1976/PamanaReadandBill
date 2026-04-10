@@ -39,7 +39,7 @@ class CustomerViewModel : ViewModel() {
     var selectedFinding by mutableStateOf("                ")
     var remarks by mutableStateOf("")
     var averageLast3 by mutableStateOf(0)
-    var isModified by mutableStateOf(false)
+    var isModified by mutableStateOf(false)  // flag to track if changes has been made
 
     // Add a function to update the reading
     fun updateReading(value: String) {
@@ -61,6 +61,7 @@ class CustomerViewModel : ViewModel() {
     }
     fun updateAverageLast3(value: Int) { averageLast3 = value }
     fun moveTo(value: Int) { currentIndex = value}
+    fun resetModified() { isModified = false }
 
     fun loadCustomers(db: AppDatabase) {
         viewModelScope.launch {
