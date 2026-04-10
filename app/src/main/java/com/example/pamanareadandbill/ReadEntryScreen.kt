@@ -792,17 +792,47 @@ fun PreviewTabContent(viewModel: CustomerViewModel) {
     } else {
         rawAcct
     }
+    var subTotal = 0.00
     val scNumber = customer.srvc_nmbr.substring(0, 8) + "-" + customer.srvc_nmbr.substring(8)
-    val vat = viewModel.pesoValue.toDouble() * 0.12
-    val subTotal = viewModel.pesoValue.toDouble() + vat
-    val penalty = subTotal * 0.10
+    var vat = viewModel.pesoValue.toDouble() * 0.12
+    subTotal = viewModel.pesoValue.toDouble() + vat
+    var penalty = subTotal * 0.10
+
+    //-----------------------------------------------------------------------
+    // Compute for Senior Citizen discount
+    //-----------------------------------------------------------------------
+    var discount = 0.00
+    var discAmount = 0.00
+    if(customer.s_citizen == "T" || customer.s_citizen == "S") {
+        if(viewModel.consumption.toInt() <= 30) {
+            discount = (viewModel.pesoValue.toDouble() + vat) * 0.05
+            discAmount = viewModel.pesoValue.toDouble() + vat - discount
+            penalty = discAmount * 0.10
+        }
+    }
+    //-----------------------------------------------------------------------
     var runningTotal = 0.00
+    //----------------------------------------------------------------------------------------------------------------
+    // How to deal with customers with negative balance
+    //----------------------------------------------------------------------------------------------------------------
+    if(customer.amt_arr + viewModel.pesoValue.toDouble() > 0) {
+        if (customer.amt_arr < 0) {
+            if ((customer.s_citizen == "T" || customer.s_citizen == "S") && (viewModel.consumption.toInt() <= 30)) {
+                penalty = (discAmount - customer.amt_arr) * 0.10
+            } else {
+                penalty = (viewModel.pesoValue.toDouble() + vat + customer.amt_arr) * 0.10
+            }
+        }
+    } else {
+        penalty = 0.00
+    }
+    //----------------------------------------------------------------------------------------------------------------
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp) // Margin around the paper
+            .padding(18.dp) // Margin around the paper
     ) {
         Surface(
             modifier = Modifier
@@ -933,6 +963,10 @@ fun PreviewTabContent(viewModel: CustomerViewModel) {
                 ReceiptRow("Add 12% VAT: ", "%,.2f".format(vat))
                 ReceiptRow("Sub-Total: ", "%,.2f".format(subTotal), isBold = true)
                 runningTotal = runningTotal + subTotal
+                if ((customer.s_citizen == "T" || customer.s_citizen == "S") && (viewModel.consumption.toInt() <= 30)) {
+                    ReceiptRow("SC Discount (5%): ", "%,.2f".format(discount))
+                    runningTotal = runningTotal - discount
+                }
                 if (customer.amt_arr != 0.0) {
                     ReceiptRow("Curr. Arrears : ", "%,.2f".format(customer.amt_arr))
                     runningTotal = runningTotal + customer.amt_arr
