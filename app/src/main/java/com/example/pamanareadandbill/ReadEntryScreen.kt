@@ -488,39 +488,47 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     },
                     onConfirm = { value ->
                         returnedValue = value   // RECEIVE VALUE
-                        if (itemToSearch == "Position") {
-                            val pos = returnedValue.toIntOrNull() ?: 0
-                            if (pos >= 1 && pos <= customers.size) {
-                                navigateWithWarning{ viewModel.moveTo(returnedValue.toInt() - 1) }
-                            } else {
-                                Toast.makeText(context, "Invalid position", Toast.LENGTH_SHORT).show()
+                        navigateWithWarning {
+                            if (itemToSearch == "Position") {
+                                val pos = returnedValue.toIntOrNull() ?: 0
+                                if (pos >= 1 && pos <= customers.size) {
+                                    viewModel.moveTo(returnedValue.toInt() - 1)
+                                } else {
+                                    Toast.makeText(context, "Invalid position", Toast.LENGTH_SHORT)
+                                        .show()
+                                }
                             }
-                        }
-                        if (itemToSearch == "Name"){
-                            val searchResult = viewModel.customers.indexOfFirst {
-                                it.cssr_name.contains(returnedValue, ignoreCase = true)
+                            if (itemToSearch == "Name") {
+                                val searchResult = viewModel.customers.indexOfFirst {
+                                    it.cssr_name.contains(returnedValue, ignoreCase = true)
+                                }
+                                if (searchResult != -1) {
+                                    viewModel.moveTo(searchResult)
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "Customer not found",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
-                            if (searchResult != -1) {
-                                navigateWithWarning{ viewModel.moveTo(searchResult) }
-                            } else {
-                                Toast.makeText(context, "Customer not found", Toast.LENGTH_SHORT).show()
+                            if (itemToSearch == "Meter") {
+                                val searchResult = viewModel.customers.indexOfFirst {
+                                    it.mtr_info.contains(returnedValue, ignoreCase = true)
+                                }
+                                if (searchResult != -1) {
+                                    viewModel.moveTo(searchResult)
+                                } else {
+                                    Toast.makeText(context, "Meter not found", Toast.LENGTH_SHORT)
+                                        .show()
+                                }
                             }
-                        }
-                        if (itemToSearch == "Meter"){
-                            val searchResult = viewModel.customers.indexOfFirst {
-                                it.mtr_info.contains(returnedValue, ignoreCase = true)
+                            showDialog = false
+                            clearFields(viewModel)
+                            averagePrefix = ""
+                            scope.launch {
+                                loadReadings(viewModel, db)
                             }
-                            if (searchResult != -1) {
-                                navigateWithWarning{ viewModel.moveTo(searchResult) }
-                            } else {
-                                Toast.makeText(context, "Meter not found", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                        showDialog = false
-                        clearFields(viewModel)
-                        averagePrefix=""
-                        scope.launch {
-                            loadReadings(viewModel, db)
                         }
                     },
                     searchItem = itemToSearch
