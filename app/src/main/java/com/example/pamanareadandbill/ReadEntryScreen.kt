@@ -641,7 +641,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                 }
                 Button(
                     onClick = {
-                        samplePrint(context)
+                        printBill(context, viewModel)
                     },
                     modifier = Modifier.weight(1f)
                 ) {
