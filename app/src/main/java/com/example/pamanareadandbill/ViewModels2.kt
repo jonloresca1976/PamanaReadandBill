@@ -223,7 +223,7 @@ class ReadersViewModel(private val db: AppDatabase) : ViewModel(), ResettableImp
         viewModelScope.launch(Dispatchers.IO) {
             importResult = importResult.copy(isImporting = true, isDone = false)
 
-            // Delete all existing histories before starting the import
+            // Delete all existing meter readers before starting the import
             db.meterReaderDao().deleteAllMeterReaders()
 
             parseAndInsert(context, uri)
@@ -247,11 +247,11 @@ class ReadersViewModel(private val db: AppDatabase) : ViewModel(), ResettableImp
 
                     val parts = parseLine1(line)
 
-                    if (parts.size >= 2) {
+                    if (parts.size >= 4) {
                         try {
                             batch.add(
                                 MeterReaders(
-                                    reader_id = parts[0],
+                                    reader_id    = parts[0],
                                     reader_name  = parts[1],
                                     reader_pw    = parts[2],
                                     device_id    = parts[3]
@@ -292,7 +292,7 @@ class ReadersViewModel(private val db: AppDatabase) : ViewModel(), ResettableImp
     }
 }
 
-class ReaderssViewModelFactory(private val db: AppDatabase) : ViewModelProvider.Factory {
+class ReadersViewModelFactory(private val db: AppDatabase) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return ReadersViewModel(db) as T
     }

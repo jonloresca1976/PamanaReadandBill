@@ -1094,7 +1094,7 @@ fun PreviewTabContent(viewModel: CustomerViewModel) {
                 )
                 ReceiptRow("03/18/2026:", "%,.2f".format(runningTotal + penalty))
                 Text("=".repeat(32), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
-                ReceiptRow("Meter Reader: ", "GRANDY DECIPULO")  // TODO : Add actual reader name
+                ReceiptRow("Meter Reader: ", UserSession.readerName ?: "")  // TODO : Add actual reader name
                 ReceiptRow("Remarks:", viewModel.selectedFinding)
                 Text(
                     text = "Tue, 3 Mar 2026 11:02:19",                         // TODO : Add actual date and time stamp

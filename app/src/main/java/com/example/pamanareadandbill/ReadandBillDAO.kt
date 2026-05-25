@@ -136,7 +136,7 @@ interface MeterReaderDao {
     @Query("SELECT * FROM MeterReaders WHERE reader_id = :reader_id LIMIT 1")
     suspend fun getMeterReader(reader_id: String): MeterReaders?
 
-    @Query("SELECT * FROM MeterReaders WHERE reader_id = :reader_id AND reader_pw = :reader_pw LIMIT 1")
+    @Query("SELECT * FROM MeterReaders WHERE LOWER(reader_id) = LOWER(:reader_id) AND reader_pw = :reader_pw LIMIT 1")
     suspend fun getMeterReader(reader_id: String, reader_pw: String): MeterReaders?
 
     @Query("DELETE FROM MeterReaders")

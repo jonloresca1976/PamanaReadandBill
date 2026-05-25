@@ -25,6 +25,7 @@ import androidx.navigation.NavController
 import com.example.pamanareadandbill.ui.theme.PamanaReadandBillTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +49,9 @@ fun LoginScreen(
         "UROVO",
         "OTHERS"
     )
+
+    //val database = AppDatabase.getDatabase(context)
+    val db = DatabaseProvider.getDatabase(context)
 
     var selectedDevice by remember { mutableStateOf(deviceTypes[0]) }
 
@@ -179,13 +183,33 @@ fun LoginScreen(
                     onClick = {
                         /*scope.launch(Dispatchers.IO) {
                             populateData(context)
-                        }*/
+                        }
                         if (username == "onat" && password == "123") {
                             onLoginClick()
                         } else {
                             errorMessage = "Invalid username or password"
+                        }*/
+                        if (username.isBlank() || password.isBlank()) {
+                            errorMessage = "Please enter both username and password"
+                            return@Button
                         }
 
+                        scope.launch {
+                            // Perform database query on IO thread
+                            val reader = withContext(Dispatchers.IO) {
+                                db.meterReaderDao().getMeterReader(username, password)
+                            }
+
+                            if (reader != null) {
+                                UserSession.readerId = reader.reader_id
+                                UserSession.readerName = reader.reader_name
+                                UserSession.deviceId = reader.device_id
+
+                                onLoginClick()
+                            } else {
+                                errorMessage = "Invalid username or password"
+                            }
+                        }
                     },
                     modifier = Modifier.weight(1f)
                 ) {

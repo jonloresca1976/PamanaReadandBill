@@ -345,9 +345,13 @@ fun UpdateTabContent() {
         factory = RatesViewModelFactory(db)
     )
 
+    val viewModel3: ReadersViewModel = viewModel(
+        factory = ReadersViewModelFactory(db)
+    )
 
     val importResult = viewModel1.importResult
     val importResult2 = viewModel2.importResult
+    val importResult3 = viewModel3.importResult
 
     val launcher1 = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -365,6 +369,14 @@ fun UpdateTabContent() {
         }
     }
 
+    val launcher3 = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) {uri: Uri? ->
+        uri?.let {
+            viewModel3.importCsv(context,it)
+        }
+    }
+
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.background,
@@ -379,8 +391,10 @@ fun UpdateTabContent() {
         ) {
             Spacer(modifier = Modifier.height(30.dp))
             Button(
-                onClick = {},
-                // enabled = !importResult.isImporting
+                onClick = {
+                    launcher3.launch("text/*")
+                },
+                enabled = !importResult3.isImporting,
                 modifier = Modifier
                     .width(300.dp)
             ) {
@@ -408,7 +422,7 @@ fun UpdateTabContent() {
             ) {
                 Text("Update Water Rates")
             }
-            if (importResult.isImporting || importResult2.isImporting) {
+            if (importResult.isImporting || importResult2.isImporting || importResult3.isImporting) {
                 Spacer(modifier = Modifier.height(20.dp))
                 CircularProgressIndicator()
                 Text("Importing data...", modifier = Modifier.padding(top = 8.dp))
@@ -450,6 +464,8 @@ fun UpdateTabContent() {
 
     // Done importing water rates...
     AlertDoneImporting(importResult2, viewModel2)
+    // Done importing meter readers...
+    AlertDoneImporting(importResult3, viewModel3)
     /*
     if (importResult2.isDone) {
         AlertDialog(
