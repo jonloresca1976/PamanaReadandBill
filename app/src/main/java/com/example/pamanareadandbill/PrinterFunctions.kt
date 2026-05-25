@@ -55,6 +55,7 @@ fun printBill(context: Context, viewModel: CustomerViewModel) {
         rawAcct
     }
     val scNumber = customer.srvc_nmbr.substring(0, 8) + "-" + customer.srvc_nmbr.substring(8)
+    val referenceNo = "007" + customer.srvc_nmbr.substring(0, 8)
 
     var subTotal = 0.00
     var vat = viewModel.pesoValue.toDouble() * 0.12
@@ -116,8 +117,8 @@ fun printBill(context: Context, viewModel: CustomerViewModel) {
     sb.append("<110>FOR THE MONTH OF: MARCH 2026\n")
     sb.append("<101>${customer.cssr_name.trimEnd()}")
     sb.append("<100>${customer.cssr_addr.trimEnd()}")
-    sb.append("<000>Reference #: 007${customer.srvc_nmbr}")
-    sb.append("<000>Acct. #    : $formattedAcct")
+    sb.append("<000>Reference #: $referenceNo")
+    sb.append("<000>Account   #: $formattedAcct")
     sb.append("<000>Srvc Conn #: $scNumber")
     sb.append("<000>" + "-".repeat(32))
     sb.append("<000>Meter. Nmbr: ${customer.mtr_info.trimEnd()}")
@@ -126,7 +127,7 @@ fun printBill(context: Context, viewModel: CustomerViewModel) {
     sb.append("<000>" + "-".repeat(32))
     sb.append("<000>" + formatReceiptLine("Present  Reading:", viewModel.reading))
     sb.append("<000>" + formatReceiptLine("Previous Reading:", customer.prev_rdng.toString()))
-    sb.append("<000>" + formatReceiptLine("Consumption:", viewModel.consumption))
+    sb.append("<000>" + formatReceiptLine("Consumption     :", viewModel.consumption))
     sb.append("<000>" + "-".repeat(32))
     sb.append("<100>" + formatReceiptLine("Basic Charge :", "%,.2f".format(viewModel.pesoValue.toDouble())))
     sb.append("<000>" + formatReceiptLine("Add VAT (12%):", "%,.2f".format(vat)))

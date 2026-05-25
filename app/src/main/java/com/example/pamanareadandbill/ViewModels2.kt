@@ -208,3 +208,92 @@ class RatesViewModelFactory(private val db: AppDatabase) : ViewModelProvider.Fac
         return RatesViewModel(db) as T
     }
 }
+
+class ReadersViewModel(private val db: AppDatabase) : ViewModel(), ResettableImport {
+    // val findings: Flow<List<FieldFindings>> = db.findingsDao().getFldFindings()
+
+    var importResult by mutableStateOf(ImportResult())
+        private set
+
+    override fun resetImportResult() {
+        importResult = ImportResult()
+    }
+
+    fun importCsv(context: Context, uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            importResult = importResult.copy(isImporting = true, isDone = false)
+
+            // Delete all existing histories before starting the import
+            db.meterReaderDao().deleteAllMeterReaders()
+
+            parseAndInsert(context, uri)
+        }
+    }
+
+    private suspend fun parseAndInsert(context: Context, uri: Uri) {
+        var successCount = 0
+        var errorCount = 0
+        val errors = mutableListOf<String>()
+
+        try {
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return
+
+            val batch = mutableListOf<MeterReaders>()
+
+            BufferedReader(InputStreamReader(inputStream)).useLines { lines ->
+                // skip the first line
+                lines.drop(1).forEachIndexed { index, line ->
+                    if (line.isBlank()) return@forEachIndexed
+
+                    val parts = parseLine1(line)
+
+                    if (parts.size >= 2) {
+                        try {
+                            batch.add(
+                                MeterReaders(
+                                    reader_id = parts[0],
+                                    reader_name  = parts[1],
+                                    reader_pw    = parts[2],
+                                    device_id    = parts[3]
+                                )
+                            )
+                            successCount++
+                        } catch (e: Exception) {
+                            errorCount++
+                            errors.add("Line ${index + 1}: ${e.localizedMessage}")
+                        }
+                    } else {
+                        errorCount++
+                        errors.add("Line ${index + 1}: Invalid column count (${parts.size})")
+                    }
+
+                    if (batch.size == 100) {
+                        db.meterReaderDao().insertMeterReaders(batch)
+                        batch.clear()
+                    }
+                }
+            }
+
+            if (batch.isNotEmpty()) {
+                db.meterReaderDao().insertMeterReaders(batch)
+            }
+        } catch (e: Exception) {
+            errorCount++
+            errors.add("File error: ${e.localizedMessage}")
+        } finally {
+            importResult = ImportResult(
+                successCount = successCount,
+                errorCount = errorCount,
+                errors = errors,
+                isImporting = false,
+                isDone = true
+            )
+        }
+    }
+}
+
+class ReaderssViewModelFactory(private val db: AppDatabase) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return ReadersViewModel(db) as T
+    }
+}

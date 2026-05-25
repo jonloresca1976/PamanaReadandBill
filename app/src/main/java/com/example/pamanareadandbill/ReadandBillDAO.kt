@@ -118,3 +118,28 @@ interface MeterReadingDao {
     suspend fun deleteAllMeterReading(): Int
 
 }
+
+@Dao
+interface MeterReaderDao {
+    //---------------------------------------------------------
+    // Meter Reader related queries
+    //---------------------------------------------------------
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMeterReaders(meterReaders: MeterReaders)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMeterReaders(meterReaders: List<MeterReaders>)
+
+    @Query("SELECT * FROM MeterReaders ORDER BY reader_id")
+    fun getAllMeterReaders(): Flow<List<MeterReaders>>
+
+    @Query("SELECT * FROM MeterReaders WHERE reader_id = :reader_id LIMIT 1")
+    suspend fun getMeterReader(reader_id: String): MeterReaders?
+
+    @Query("SELECT * FROM MeterReaders WHERE reader_id = :reader_id AND reader_pw = :reader_pw LIMIT 1")
+    suspend fun getMeterReader(reader_id: String, reader_pw: String): MeterReaders?
+
+    @Query("DELETE FROM MeterReaders")
+    suspend fun deleteAllMeterReaders(): Int
+
+}
