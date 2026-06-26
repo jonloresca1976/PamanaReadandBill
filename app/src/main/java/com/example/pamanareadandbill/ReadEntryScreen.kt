@@ -1039,7 +1039,7 @@ fun PreviewTabContent(viewModel: CustomerViewModel) {
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                 )
                 Text(
-                    text = "Date To     : 04/03/2026",
+                    text = "Date To     : " + UserSession.readDate,
                     style = MaterialTheme.typography.titleMedium,
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                 )
@@ -1092,7 +1092,7 @@ fun PreviewTabContent(viewModel: CustomerViewModel) {
                     style = MaterialTheme.typography.titleMedium,
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                 )
-                ReceiptRow("03/18/2026:", "%,.2f".format(runningTotal + penalty))
+                ReceiptRow((UserSession.dueDate ?: ""), "%,.2f".format(runningTotal + penalty))
                 Text("=".repeat(32), fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
                 ReceiptRow("Meter Reader: ", UserSession.readerName ?: "")  // TODO : Add actual reader name
                 ReceiptRow("Remarks:", viewModel.selectedFinding)

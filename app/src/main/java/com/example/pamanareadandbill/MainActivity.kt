@@ -70,6 +70,10 @@ class MainActivity : ComponentActivity() {
                         DataScreen(navController)
                     }
 
+                    composable("settings") {
+                        SettingsScreen(navController)
+                    }
+
                 }
             }
         }

@@ -180,7 +180,7 @@ fun MenuGrid(
             drawable = R.drawable.mi_settings,
             text = R.string.mit_settings,
             modifier = Modifier.padding(8.dp),
-            onItemClick = {}
+            onItemClick = {navController.navigate("settings")}
         )
 
         MenuItem(

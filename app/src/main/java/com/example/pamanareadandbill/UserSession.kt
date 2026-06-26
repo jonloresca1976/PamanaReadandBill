@@ -7,6 +7,8 @@ object UserSession {
     var readerId: String?= null
     var readerName: String? = null
     var deviceId: String? = null
+    var readDate: String? = null
+    var dueDate: String? = null
 
     /**
      * Call this when the user logs out to clear sensitive data.
@@ -15,5 +17,8 @@ object UserSession {
         readerId = null
         readerName = null
         deviceId = null
+        readDate = null
+        dueDate = null
+
     }
 }
