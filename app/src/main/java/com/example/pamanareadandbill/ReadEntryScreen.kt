@@ -1103,7 +1103,8 @@ fun PreviewTabContent(viewModel: CustomerViewModel) {
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
                 Text(
-                    text = "DEVICE SN: R58M22FWZDD",
+                    //ReceiptRow("DEVICE ID: ", UserSession.deviceId ?: "")
+                    text = "DEVICE ID: " + (UserSession.deviceId ?: ""),
                     style = MaterialTheme.typography.titleMedium,
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                     modifier = Modifier.align(Alignment.CenterHorizontally)

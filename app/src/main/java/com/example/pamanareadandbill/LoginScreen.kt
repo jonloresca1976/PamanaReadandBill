@@ -26,6 +26,7 @@ import com.example.pamanareadandbill.ui.theme.PamanaReadandBillTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.provider.Settings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -200,10 +201,15 @@ fun LoginScreen(
                                 db.meterReaderDao().getMeterReader(username, password)
                             }
 
+                            val deviceId = Settings.Secure.getString(
+                                context.contentResolver,
+                                Settings.Secure.ANDROID_ID
+                            )
+
                             if (reader != null) {
                                 UserSession.readerId = reader.reader_id
                                 UserSession.readerName = reader.reader_name
-                                UserSession.deviceId = reader.device_id
+                                UserSession.deviceId = deviceId
 
                                 onLoginClick()
                             } else {

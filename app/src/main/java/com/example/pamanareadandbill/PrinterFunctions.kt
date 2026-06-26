@@ -165,7 +165,7 @@ fun printBill(context: Context, viewModel: CustomerViewModel) {
     sb.append("<000>" + formatReceiptLine("Meter Reader:", UserSession.readerName ?: ""))
     sb.append("<000>" + formatReceiptLine("Remarks:", viewModel.selectedFinding))
     sb.append("<010>" + "Tue, 3 Mar 2026 11:02:19")
-    sb.append("<010>" + "Device SN: R58M22FWZDD")
+    sb.append("<010>" + "Device ID: " + (UserSession.deviceId ?: ""))
 
     val message1 = "PLEASE SETTLE YOUR BALANCE\n" +
                    "ON OR BEFORE 03/18/2026\n" +
