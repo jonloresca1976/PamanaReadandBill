@@ -74,6 +74,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.max
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import kotlinx.coroutines.delay
 
 @Composable
 fun ReadEntryScreen(navController: NavController) {
@@ -113,6 +116,43 @@ fun ReadingTab(navController: NavController) {
         }
     }
 }
+
+//-------------------------------------------------------------------------------------
+// This will allow the user to hold the Next and Previous buttons to continuously cycle
+// through the customers.
+//-------------------------------------------------------------------------------------
+@Composable
+fun RepeatingButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    content: @Composable () -> Unit
+) {
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    // This effect runs whenever the 'pressed' state or 'enabled' state changes
+    LaunchedEffect(isPressed, enabled) {
+        if (isPressed && enabled) {
+            onClick() // Initial click (immediate)
+            delay(400) // Initial delay before starting the cycle (long press threshold)
+
+            while (isPressed && enabled) {
+                onClick()
+                delay(100) // Speed of cycling (10 customers per second)
+            }
+        }
+    }
+
+    Button(
+        onClick = {}, // Handled by the LaunchedEffect above
+        modifier = modifier,
+        enabled = enabled,
+        interactionSource = interactionSource,
+        content = { content() }
+    )
+}
+//-------------------------------------------------------------------------------------
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -587,7 +627,8 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Button(
+                //Button(
+                RepeatingButton(
                     onClick = {
                         navigateWithWarning {
                             viewModel.previous()
@@ -651,7 +692,8 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                         contentDescription = null
                     )
                 }
-                Button(
+                //Button(
+                RepeatingButton(
                     onClick = {
                         navigateWithWarning {
                             viewModel.next()
