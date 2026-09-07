@@ -9,6 +9,8 @@ object UserSession {
     var deviceId: String? = null
     var readDate: String? = null
     var dueDate: String? = null
+    var ipAddr: String? = null
+    var svrPort: String? = null
 
     /**
      * Call this when the user logs out to clear sensitive data.
@@ -19,6 +21,8 @@ object UserSession {
         deviceId = null
         readDate = null
         dueDate = null
+        ipAddr = null
+        svrPort = null
 
     }
 }
