@@ -11,6 +11,10 @@ object UserSession {
     var dueDate: String? = null
     var ipAddr: String? = null
     var svrPort: String? = null
+    var dbIPAddr: String? = null
+    var dbPort: String? = null
+    var dbUser: String? = null
+    var dbPassword: String? = null
 
     /**
      * Call this when the user logs out to clear sensitive data.
@@ -23,6 +27,10 @@ object UserSession {
         dueDate = null
         ipAddr = null
         svrPort = null
+        dbIPAddr = null
+        dbPort = null
+        dbUser = null
+        dbPassword = null
 
     }
 }

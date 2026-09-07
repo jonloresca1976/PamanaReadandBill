@@ -13,10 +13,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -40,6 +43,10 @@ import androidx.navigation.NavController
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 
 @Composable
 fun SettingsScreen(navController: NavController) {
@@ -74,7 +81,7 @@ fun SettingsTab(navController: NavController) {
         when (selectedTabIndex) {
             0 -> DateTabContent()
             1 -> ServerTabContent(viewModel)
-            2 -> DatabaseTabContent()
+            2 -> DatabaseTabContent(viewModel)
             3 -> PasswordTabContent()
         }
     }
@@ -254,8 +261,8 @@ fun ServerTabContent(viewModel : SettingsViewModel ) {
     var ipAddr by remember { mutableStateOf("") }
     var svrPort by remember { mutableStateOf("") }
 
-    ipAddr = viewModel.ipAddr
-    svrPort = viewModel.svrPort
+    //ipAddr = viewModel.ipAddr
+    //svrPort = viewModel.svrPort
 
     //--------------------------------------------------------------------
     // Setup the Preferences that will store certain values such as Dates
@@ -274,6 +281,9 @@ fun ServerTabContent(viewModel : SettingsViewModel ) {
         // Also sync to your global session for immediate use elsewhere
         UserSession.ipAddr = ipAddr
         UserSession.svrPort = svrPort
+
+        viewModel.updateIPAddr(ipAddr)
+        viewModel.updateSvrPort(svrPort)
     }
     //--------------------------------------------------------------------
 
@@ -294,6 +304,7 @@ fun ServerTabContent(viewModel : SettingsViewModel ) {
                 value = ipAddr,
                 readOnly = false,
                 onValueChange = {
+                    ipAddr = it
                     viewModel.updateIPAddr(it)
                 },
                 keyboardOptions = KeyboardOptions(
@@ -309,6 +320,7 @@ fun ServerTabContent(viewModel : SettingsViewModel ) {
                 value = svrPort,
                 readOnly = false,
                 onValueChange = {
+                    svrPort = it
                     viewModel.updateSvrPort(it)
                 },
                 keyboardOptions = KeyboardOptions(
@@ -348,8 +360,48 @@ fun ServerTabContent(viewModel : SettingsViewModel ) {
 }
 
 @Composable
-fun DatabaseTabContent() {
+fun DatabaseTabContent(viewModel : SettingsViewModel) {
     // Text("Database Settings")
+    var dbIPAddr by remember { mutableStateOf("") }
+    var dbPort by remember { mutableStateOf("") }
+    var dbUser by remember { mutableStateOf("") }
+    var dbPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    //dbIPAddr = viewModel.dbIPAddr
+    //dbPort = viewModel.dbPort
+    //dbUser = viewModel.dbUser
+    //dbPassword = viewModel.dbPassword
+
+    //--------------------------------------------------------------------
+    // Setup the Preferences that will store certain values such as Dates
+    //--------------------------------------------------------------------
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("AppSettings", Context.MODE_PRIVATE) }
+    //--------------------------------------------------------------------
+
+    //--------------------------------------------------------------------
+    // Get the values from the Preferences and store it in Sessions
+    //--------------------------------------------------------------------
+    LaunchedEffect(Unit) {
+        dbIPAddr = prefs.getString("db_ip_addr", "") ?: ""
+        dbPort = prefs.getString("db_port", "") ?: ""
+        dbUser = prefs.getString("db_user", "") ?: ""
+        dbPassword = prefs.getString("db_password", "") ?: ""
+
+        // Also sync to your global session for immediate use elsewhere
+        UserSession.dbIPAddr = dbIPAddr
+        UserSession.dbPort = dbPort
+        UserSession.dbUser = dbUser
+        UserSession.dbPassword = dbPassword
+
+        viewModel.updateDBIPAddr(dbIPAddr)
+        viewModel.updateDBPort(dbPort)
+        viewModel.updateDBUser(dbUser)
+        viewModel.updateDBPassword(dbPassword)
+    }
+    //-------------------------------------------------------------------
+
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.background,
@@ -364,10 +416,11 @@ fun DatabaseTabContent() {
         ) {
             Spacer(modifier = Modifier.height(20.dp))
             OutlinedTextField(
-                value = "",
-                readOnly = true,
+                value = dbIPAddr,
+                readOnly = false,
                 onValueChange = {
-
+                    dbIPAddr = it
+                    viewModel.updateDBIPAddr(it)
                 },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number
@@ -379,10 +432,11 @@ fun DatabaseTabContent() {
             )
             Spacer(modifier = Modifier.height(20.dp))
             OutlinedTextField(
-                value = "",
-                readOnly = true,
+                value = dbPort,
+                readOnly = false,
                 onValueChange = {
-
+                    dbPort = it
+                    viewModel.updateDBPort(it)
                 },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number
@@ -394,14 +448,12 @@ fun DatabaseTabContent() {
             )
             Spacer(modifier = Modifier.height(20.dp))
             OutlinedTextField(
-                value = "",
-                readOnly = true,
+                value = dbUser,
+                readOnly = false,
                 onValueChange = {
-
+                    dbUser = it
+                    viewModel.updateDBUser(it)
                 },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number
-                ),
                 label = {
                     Text(text = "Database User", fontSize = 14.sp) },
                 modifier = Modifier
@@ -409,22 +461,48 @@ fun DatabaseTabContent() {
             )
             Spacer(modifier = Modifier.height(20.dp))
             OutlinedTextField(
-                value = "",
-                readOnly = true,
+                value = dbPassword,
                 onValueChange = {
+                    dbPassword = it
+                    viewModel.updateDBPassword(it) },
+                label = { Text("Database Password") },
+                // Use this to mask/unmask the text
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    val image = if (passwordVisible)
+                        Icons.Filled.Visibility
+                    else Icons.Filled.VisibilityOff
 
+                    // Clickable icon to toggle visibility
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(imageVector = image, contentDescription = null)
+                    }
                 },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number
-                ),
-                label = {
-                    Text(text = "Database Password", fontSize = 14.sp) },
                 modifier = Modifier
                     .fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(20.dp))
             Button(
-                onClick = { },
+                onClick = {
+                    //-----------------------------------------------
+                    // Save Server Settings to the Preferences
+                    //-----------------------------------------------
+                    prefs.edit().apply {
+                        putString("db_ip_addr", dbIPAddr)
+                        putString("db_port", dbPort)
+                        putString("db_user", dbUser)
+                        putString("db_password", dbPassword)
+                        apply()
+                    }
+
+                    UserSession.dbIPAddr = dbIPAddr
+                    UserSession.dbPort = dbPort
+                    UserSession.dbUser = dbUser
+                    UserSession.dbPassword = dbPassword
+
+                    Toast.makeText(context, "Database settings saved.", Toast.LENGTH_SHORT).show()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(10.dp)
@@ -527,7 +605,8 @@ fun ServerTabPreview() {
 @Preview(showBackground = true)
 @Composable
 fun DatabaseTabPreview() {
-    DatabaseTabContent()
+    val viewModel: SettingsViewModel = viewModel()
+    DatabaseTabContent(viewModel)
 }
 
 @Preview(showBackground = true)
