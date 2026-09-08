@@ -56,7 +56,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.compose.ui.text)
-    implementation(libs.androidx.navigation.compose)
     implementation("androidx.compose.material:material-icons-extended")
     // ROOM DATABASE
     implementation("androidx.room:room-runtime:$room_version")
@@ -64,6 +63,9 @@ dependencies {
     implementation ("androidx.room:room-ktx:$room_version")
     implementation("androidx.room:room-paging:$room_version")
     testImplementation("androidx.room:room-testing:$room_version")
+    
+    // KSOAP2 for Web Services - Using the version compatible with Android
+    implementation("com.google.code.ksoap2-android:ksoap2-android:3.6.4")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

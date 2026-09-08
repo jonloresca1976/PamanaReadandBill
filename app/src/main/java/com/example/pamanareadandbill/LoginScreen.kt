@@ -1,5 +1,6 @@
 package com.example.pamanareadandbill
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -43,6 +44,18 @@ fun LoginScreen(
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    //------------------------------------------------------
+    // Setup the Preferences that will store certain values
+    //------------------------------------------------------
+    val prefs = remember { context.getSharedPreferences("AppSettings", Context.MODE_PRIVATE) }
+    UserSession.ipAddr = prefs.getString("ip_addr", "") ?: ""
+    UserSession.svrPort = prefs.getString("port", "") ?: ""
+    UserSession.dbIPAddr = prefs.getString("db_ip_addr", "") ?: ""
+    UserSession.dbPort = prefs.getString("db_port", "") ?: ""
+    UserSession.dbUser = prefs.getString("db_user", "") ?: ""
+    UserSession.dbPassword = prefs.getString("db_password", "") ?: ""
+    //-------------------------------------------------------
 
     val deviceTypes = listOf(
         "DPP 250",

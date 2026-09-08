@@ -44,5 +44,4 @@ class SettingsViewModel : ViewModel() {
         dbPassword = value
         isModified = true
     }
-
 }
