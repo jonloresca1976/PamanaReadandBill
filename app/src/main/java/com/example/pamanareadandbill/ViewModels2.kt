@@ -31,6 +31,59 @@ class FindingsViewModel(private val db: AppDatabase) : ViewModel(), ResettableIm
         importResult = ImportResult()
     }
 
+    fun downloadFindings() {
+        // Using UserSession values with fallback to the ones from your error message
+        val ip = UserSession.ipAddr ?: "10.0.0.203"
+        val port = UserSession.svrPort ?: "8080"
+        // Removed ?wsdl from the endpoint
+        val url = "http://$ip:$port/RnBWebService/services/ReadBill"
+
+        viewModelScope.launch(Dispatchers.IO) {
+            importResult = importResult.copy(isImporting = true, isDone = false)
+            var successCount = 0
+            var errorCount = 0
+            val errors = mutableListOf<String>()
+            try {
+                val request = SoapObject("http://rnbWS", "getFindings")
+                val envelope = SoapSerializationEnvelope(SoapEnvelope.VER11)
+                envelope.dotNet = false
+                envelope.setOutputSoapObject(request)
+
+                val transport = HttpTransportSE(url)
+                // Action provided: http://rnbWS/getFindings
+                transport.call("http://rnbWS/getFindings", envelope)
+
+                val response = envelope.response?.toString() ?: ""
+                if (response.isNotBlank()) {
+                    val records = response.split("#")
+                    val batch = mutableListOf<FieldFindings>()
+                    records.forEach { record ->
+                        if (record.isNotBlank()) {
+                            val fields = record.split("$")
+                            if (fields.size >= 2) {
+                                batch.add(FieldFindings(finding_desc = fields[0], endorsed_to = fields[1]))
+                                successCount++
+                            }
+                        }
+                        if (batch.size == 100) {
+                            db.findingsDao().insertFldFindings(batch)
+                            batch.clear()
+                        }
+                    }
+                    if (batch.isNotEmpty()) {
+                        db.findingsDao().deleteAllFldFindings()
+                        db.findingsDao().insertFldFindings(batch)
+                    }
+                }
+            } catch (e: Exception) {
+                errorCount++
+                errors.add("Download error: ${e.localizedMessage}")
+            } finally {
+                importResult = ImportResult(successCount, errorCount, errors, false, true)
+            }
+        }
+    }
+
     fun importCsv(context: Context, uri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
             importResult = importResult.copy(isImporting = true, isDone = false)

@@ -404,7 +404,8 @@ fun UpdateTabContent() {
             Spacer(modifier = Modifier.height(30.dp))
             Button(
                 onClick = {
-                    launcher1.launch("text/*")
+                    viewModel1.downloadFindings()
+                    //launcher1.launch("text/*")
                 },
                 enabled = !importResult.isImporting,
                 modifier = Modifier
