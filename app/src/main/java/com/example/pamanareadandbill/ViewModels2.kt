@@ -57,6 +57,7 @@ class FindingsViewModel(private val db: AppDatabase) : ViewModel(), ResettableIm
                 if (response.isNotBlank()) {
                     val records = response.split("#")
                     val batch = mutableListOf<FieldFindings>()
+                    db.findingsDao().deleteAllFldFindings()
                     records.forEach { record ->
                         if (record.isNotBlank()) {
                             val fields = record.split("$")
@@ -71,7 +72,6 @@ class FindingsViewModel(private val db: AppDatabase) : ViewModel(), ResettableIm
                         }
                     }
                     if (batch.isNotEmpty()) {
-                        db.findingsDao().deleteAllFldFindings()
                         db.findingsDao().insertFldFindings(batch)
                     }
                 }
@@ -139,6 +139,67 @@ class RatesViewModel(private val db: AppDatabase) : ViewModel(), ResettableImpor
 
     override fun resetImportResult() {
         importResult = ImportResult()
+    }
+
+    fun downloadRates() {
+        // Using UserSession values with fallback to the ones from your error message
+        val ip = UserSession.ipAddr ?: "10.0.0.203"
+        val port = UserSession.svrPort ?: "8080"
+        // Removed ?wsdl from the endpoint
+        val url = "http://$ip:$port/RnBWebService/services/ReadBill"
+
+        viewModelScope.launch(Dispatchers.IO) {
+            importResult = importResult.copy(isImporting = true, isDone = false)
+            var successCount = 0
+            var errorCount = 0
+            val errors = mutableListOf<String>()
+            try {
+                val request = SoapObject("http://rnbWS", "getRates")
+                val envelope = SoapSerializationEnvelope(SoapEnvelope.VER11)
+                envelope.dotNet = false
+                envelope.setOutputSoapObject(request)
+
+                val transport = HttpTransportSE(url)
+                // Action provided: http://rnbWS/getFindings
+                transport.call("http://rnbWS/getRates", envelope)
+
+                val response = envelope.response?.toString() ?: ""
+                if (response.isNotBlank()) {
+                    val records = response.split("#")
+                    val batch = mutableListOf<WaterRates>()
+                    db.waterRatesDao().deleteAllWaterRates()
+                    records.forEach { record ->
+                        if (record.isNotBlank()) {
+                            val parts = record.split("$")
+                            if (parts.size >= 17) {
+                                //batch.add(FieldFindings(finding_desc = fields[0], endorsed_to = fields[1]))
+                                batch.add(WaterRates(
+                                    acct_code = parts[0], acct_desc = parts[1],
+                                    low_lim1 = parts[2].toInt(), high_lim1 = parts[3].toInt(), amt1 = parts[4].toDouble(),
+                                    low_lim2 = parts[5].toInt(), high_lim2 = parts[6].toInt(), amt2 = parts[7].toDouble(),
+                                    low_lim3 = parts[8].toInt(), high_lim3 = parts[9].toInt(), amt3 = parts[10].toDouble(),
+                                    low_lim4 = parts[11].toInt(), high_lim4 = parts[12].toInt(), amt4 = parts[13].toDouble(),
+                                    low_lim5 = parts[14].toInt(), high_lim5 = parts[15].toInt(), amt5 = parts[16].toDouble()
+                                ))
+                                successCount++
+                            }
+                        }
+                        if (batch.size == 100) {
+                            db.waterRatesDao().insertWaterRates(batch)
+                            batch.clear()
+                        }
+                    }
+                    if (batch.isNotEmpty()) {
+                        db.waterRatesDao().insertWaterRates(batch)
+                    }
+                }
+            } catch (e: Exception) {
+                errorCount++
+                errors.add("Download error: ${e.localizedMessage}")
+            } finally {
+                importResult = ImportResult(successCount, errorCount, errors, false, true)
+            }
+        }
     }
 
     fun importCsv(context: Context, uri: Uri) {

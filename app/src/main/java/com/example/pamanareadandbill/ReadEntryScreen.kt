@@ -385,7 +385,7 @@ fun ReadingTabContent(viewModel: CustomerViewModel) {
                     onClick = {
                         val r = reading.toIntOrNull() ?: 0
                         var cons = 0
-                        if (r > prevReading) {
+                        if (r >= prevReading) {
                             cons = r - prevReading
                             viewModel.updateConsumption(cons.toString()) // Update ViewModel
                             computeValue(
