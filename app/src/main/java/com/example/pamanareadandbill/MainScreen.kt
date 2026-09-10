@@ -222,19 +222,34 @@ private fun BottomNavigation(modifier: Modifier = Modifier) {
 
 @Composable
 fun TitleBar(title: String) {
+    val readerName = UserSession.readerName ?: ""
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.primary)
             .padding(16.dp)
     ) {
-        Text (
-            text = title,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onPrimary,
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(10.dp)
-        )
+        Column (
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = title,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(top = 10.dp)
+            )
+            if (readerName.isNotEmpty()) {
+                Text(
+                    text = "Reader: $readerName",
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
+        }
     }
 }
 

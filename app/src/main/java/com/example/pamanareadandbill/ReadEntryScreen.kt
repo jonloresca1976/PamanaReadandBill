@@ -914,6 +914,9 @@ fun HistoryCard(history: ReadHistory) {
 @Composable
 fun PreviewTabContent(viewModel: CustomerViewModel) {
     //Text("Preview Tab Content")
+    val sdf = java.text.SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss", java.util.Locale.getDefault())
+    val currentDateTime = sdf.format(java.util.Date())
+
     if (viewModel.reading.isBlank() || viewModel.consumption.isBlank() || viewModel.pesoValue.isBlank()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Please enter and compute a reading to see the preview.")
@@ -1139,7 +1142,7 @@ fun PreviewTabContent(viewModel: CustomerViewModel) {
                 ReceiptRow("Meter Reader: ", UserSession.readerName ?: "")  // TODO : Add actual reader name
                 ReceiptRow("Remarks:", viewModel.selectedFinding)
                 Text(
-                    text = "Tue, 3 Mar 2026 11:02:19",                         // TODO : Add actual date and time stamp
+                    text = currentDateTime,                         // TODO : Add actual date and time stamp
                     style = MaterialTheme.typography.titleMedium,
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                     modifier = Modifier.align(Alignment.CenterHorizontally)

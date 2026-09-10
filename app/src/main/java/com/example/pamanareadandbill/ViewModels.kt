@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -11,6 +12,10 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import org.ksoap2.SoapEnvelope
+import org.ksoap2.serialization.SoapObject
+import org.ksoap2.serialization.SoapSerializationEnvelope
+import org.ksoap2.transport.HttpTransportSE
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import kotlin.String
@@ -128,6 +133,81 @@ class CustViewModel(private val db: AppDatabase) : ViewModel(), ResettableImport
 
     override fun resetImportResult() {
         importResult = ImportResult()
+    }
+
+    fun downloadCustomers(context: Context, readDate: String) {
+        // Using UserSession values with fallback to the ones from your error message
+        val ip = UserSession.ipAddr ?: "10.0.0.203"
+        val port = UserSession.svrPort ?: "8080"
+        // Removed ?wsdl from the endpoint
+        val url = "http://$ip:$port/RnBWebService/services/ReadBill"
+
+        viewModelScope.launch(Dispatchers.IO) {
+            importResult = importResult.copy(isImporting = true, isDone = false)
+            var successCount = 0
+            var errorCount = 0
+            val errors = mutableListOf<String>()
+            try {
+                val request = SoapObject("http://rnbWS", "downloadInfo")
+                request.addProperty("user", UserSession.readerId ?: "")
+                request.addProperty("read_date", readDate ?: "")
+                val envelope = SoapSerializationEnvelope(SoapEnvelope.VER11)
+                envelope.dotNet = false
+                envelope.setOutputSoapObject(request)
+
+                val transport = HttpTransportSE(url)
+                // Action provided: http://rnbWS/getFindings
+                transport.call("http://rnbWS/downloadInfo", envelope)
+
+                val response = envelope.response?.toString() ?: ""
+                if (response.isNotBlank()) {
+                    val records = response.split("|")
+                    val batch = mutableListOf<CustomerInfo>()
+                    db.customerDao().deleteAll()
+                    records.forEach { record ->
+                        if (record.isNotBlank()) {
+                            val parts = record.split("$")
+                            if (parts.size >= 17) {
+                                batch.add(CustomerInfo(
+                                    srvc_nmbr = parts[2], read_seqn = parts[0].toInt(), acct_nmbr = parts[1],
+                                    cssr_name = parts[3], cssr_addr = parts[4], mtr_info = parts[5],
+                                    prev_rdng = parts[6].toString().trim().toIntOrNull() ?: 0, date_from = parts[7],
+                                    amt_arr = parts[8].toDoubleOrNull() ?: 0.0, prev_arr = parts[9].toDoubleOrNull() ?: 0.0,
+                                    amt_misc = parts[10].toDoubleOrNull() ?: 0.0,
+                                    amt_mat = parts[11].toDoubleOrNull() ?: 0.0, amt_pdv = parts[12].toDoubleOrNull() ?: 0.0,
+                                    amt_aro = parts[13].toDoubleOrNull() ?: 0.0, months = parts[14].toInt(),
+                                    average = parts[17].toInt(),
+                                    stat_code = parts[15], location = parts[18], s_citizen = parts[20],
+                                    s_expire = " ", chk_sum = 0.00
+                                ))
+                                successCount++
+                            } else {
+                                UserSession.readDate = parts[1]
+                                UserSession.dueDate = parts[2]
+                                val prefs = context.getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
+                                prefs.edit().apply {
+                                    putString("read_date", parts[1])
+                                    putString("due_date", parts[2])
+                                    apply() // apply() is asynchronous and safe for background threads
+                                }
+                            }
+                        }
+                        if (batch.size == 100) {
+                            db.customerDao().insertCustomers(batch)
+                            batch.clear()
+                        }
+                    }
+                    if (batch.isNotEmpty()) {
+                        db.customerDao().insertCustomers(batch)
+                    }
+                }
+            } catch (e: Exception) {
+                errorCount++
+                errors.add("Download error: ${e.localizedMessage}")
+            } finally {
+                importResult = ImportResult(successCount, errorCount, errors, false, true)
+            }
+        }
     }
 
     fun importCsv(context: Context, uri: Uri) {

@@ -1,5 +1,6 @@
 package com.example.pamanareadandbill
 
+import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -110,6 +111,7 @@ fun DownloadTabContent(viewModel: CustViewModel) {
 
     val importResult = viewModel.importResult
     val importResult2 = viewModel2.importResult
+    val prefs = remember { context.getSharedPreferences("AppSettings", Context.MODE_PRIVATE) }
 
     //val context = LocalContext.current
 
@@ -177,7 +179,9 @@ fun DownloadTabContent(viewModel: CustViewModel) {
                     Text("Select Date")
                 }
                 Button(
-                    onClick = {},
+                    onClick = {
+                        viewModel.downloadCustomers(context,selectedDate)
+                    },
                     modifier = Modifier.weight(1f),
                     enabled = !importResult.isImporting
                 ) {
@@ -227,7 +231,7 @@ fun DownloadTabContent(viewModel: CustViewModel) {
                     Button(onClick = {
                         val millis = datePickerState.selectedDateMillis
                         if (millis != null) {
-                            val formatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                            val formatter = SimpleDateFormat("yyyy/MM/dd", Locale.getDefault())
                             selectedDate = formatter.format(Date(millis))
                         }
                         showDialog = false

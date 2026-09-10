@@ -125,7 +125,7 @@ fun DateTabContent() {
                 Button(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
                         val date = java.util.Date(millis)
-                        val formatter = java.text.SimpleDateFormat("MM/dd/yyyy", java.util.Locale.getDefault())
+                        val formatter = java.text.SimpleDateFormat("yyyy/MM/dd", java.util.Locale.getDefault())
                         val formattedDate = formatter.format(date)
 
                         if (isPickingForReadDate) readDate = formattedDate else dueDate = formattedDate

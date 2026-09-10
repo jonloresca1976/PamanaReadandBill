@@ -47,6 +47,9 @@ fun samplePrint(context: Context) {
 fun printBill(context: Context, viewModel: CustomerViewModel) {
     val sb = StringBuilder()
 
+    val sdf = java.text.SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss", java.util.Locale.getDefault())
+    val currentDateTime = sdf.format(java.util.Date())
+
     val customer = viewModel.customers[viewModel.currentIndex]
     val rawAcct = customer.acct_nmbr
     val formattedAcct = if (rawAcct.length >= 13) {
@@ -164,7 +167,7 @@ fun printBill(context: Context, viewModel: CustomerViewModel) {
     sb.append("<000>" + "=".repeat(32))
     sb.append("<000>" + formatReceiptLine("Meter Reader:", UserSession.readerName ?: ""))
     sb.append("<000>" + formatReceiptLine("Remarks:", viewModel.selectedFinding))
-    sb.append("<010>" + "Tue, 3 Mar 2026 11:02:19")
+    sb.append("<010>$currentDateTime")
     sb.append("<010>" + "Device ID: " + (UserSession.deviceId ?: ""))
 
     val message1 = "PLEASE SETTLE YOUR BALANCE\n" +

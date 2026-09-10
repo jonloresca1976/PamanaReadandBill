@@ -55,6 +55,8 @@ fun LoginScreen(
     UserSession.dbPort = prefs.getString("db_port", "") ?: ""
     UserSession.dbUser = prefs.getString("db_user", "") ?: ""
     UserSession.dbPassword = prefs.getString("db_password", "") ?: ""
+    UserSession.readDate = prefs.getString("read_date", "") ?: ""
+    UserSession.dueDate = prefs.getString("due_date", "") ?: ""
     //-------------------------------------------------------
 
     val deviceTypes = listOf(
