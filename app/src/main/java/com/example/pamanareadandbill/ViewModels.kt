@@ -2,6 +2,7 @@ package com.example.pamanareadandbill
 
 import android.content.Context
 import android.net.Uri
+import androidx.annotation.RequiresPermission
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -292,6 +293,64 @@ class HistoryViewModel(private val db: AppDatabase) : ViewModel(), ResettableImp
 
     override fun resetImportResult() {
         importResult = ImportResult()
+    }
+
+    fun downloadHistories(context: Context, readDate: String) {
+        // Using UserSession values with fallback to the ones from your error message
+        val ip = UserSession.ipAddr ?: "10.0.0.203"
+        val port = UserSession.svrPort ?: "8080"
+        // Removed ?wsdl from the endpoint
+        val url = "http://$ip:$port/RnBWebService/services/ReadBill"
+
+        viewModelScope.launch(Dispatchers.IO) {
+            importResult = importResult.copy(isImporting = true, isDone = false)
+            var successCount = 0
+            var errorCount = 0
+            val errors = mutableListOf<String>()
+            try {
+                val request = SoapObject("http://rnbWS", "downloadHistory")
+                request.addProperty("user", UserSession.readerId ?: "")
+                request.addProperty("read_date", readDate ?: "")
+                val envelope = SoapSerializationEnvelope(SoapEnvelope.VER11)
+                envelope.dotNet = false
+                envelope.setOutputSoapObject(request)
+
+                val transport = HttpTransportSE(url)
+                // Action provided: http://rnbWS/getFindings
+                transport.call("http://rnbWS/downloadHistory", envelope)
+
+                val response = envelope.response?.toString() ?: ""
+                if (response.isNotBlank()) {
+                    val records = response.split("|")
+                    val batch = mutableListOf<ReadHistory>()
+                    db.historyDao().deleteAllHistories()
+                    records.forEach { record ->
+                        if (record.isNotBlank()) {
+                            val parts = record.split("$")
+                            if (parts.size >= 6) {
+                                batch.add(ReadHistory(
+                                    srvc_nmbr = parts[0], read_date = parts[1], pres_rdng = parts[2].toInt(),
+                                    consume = parts[3].toInt(), remarks = parts[4], reader = parts[5]
+                                ))
+                                successCount++
+                            }
+                        }
+                        if (batch.size == 100) {
+                            db.historyDao().insertHistories(batch)
+                            batch.clear()
+                        }
+                    }
+                    if (batch.isNotEmpty()) {
+                        db.historyDao().insertHistories(batch)
+                    }
+                }
+            } catch (e: Exception) {
+                errorCount++
+                errors.add("Download error: ${e.localizedMessage}")
+            } finally {
+                importResult = ImportResult(successCount, errorCount, errors, false, true)
+            }
+        }
     }
 
     fun importCsv(context: Context, uri: Uri) {

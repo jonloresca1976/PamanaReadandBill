@@ -181,6 +181,7 @@ fun DownloadTabContent(viewModel: CustViewModel) {
                 Button(
                     onClick = {
                         viewModel.downloadCustomers(context,selectedDate)
+                        viewModel2.downloadHistories(context,selectedDate)
                     },
                     modifier = Modifier.weight(1f),
                     enabled = !importResult.isImporting
