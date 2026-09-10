@@ -511,7 +511,7 @@ fun AlertDoneImporting(importResult: ImportResult, viewModel: ResettableImport) 
     if (importResult.isDone) {
         AlertDialog(
             onDismissRequest = { viewModel.resetImportResult() },
-            title = { Text(if (importResult.errorCount == 0) "Import Successful" else "Import Completed with Errors") },
+            title = { Text(if (importResult.errorCount == 0) "Download Successful: ${importResult.process}" else "Import Completed with Errors") },
             text = {
                 Column {
                     Text("Success: ${importResult.successCount}")

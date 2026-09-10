@@ -124,7 +124,8 @@ data class ImportResult(
     val errorCount: Int = 0,
     val errors: List<String> = emptyList(),
     val isImporting: Boolean = false,
-    val isDone: Boolean = false
+    val isDone: Boolean = false,
+    val process: String = ""
 )
 
 class CustViewModel(private val db: AppDatabase) : ViewModel(), ResettableImport {
@@ -206,7 +207,7 @@ class CustViewModel(private val db: AppDatabase) : ViewModel(), ResettableImport
                 errorCount++
                 errors.add("Download error: ${e.localizedMessage}")
             } finally {
-                importResult = ImportResult(successCount, errorCount, errors, false, true)
+                importResult = ImportResult(successCount, errorCount, errors, false, true, process="Customer Info")
             }
         }
     }
@@ -348,7 +349,7 @@ class HistoryViewModel(private val db: AppDatabase) : ViewModel(), ResettableImp
                 errorCount++
                 errors.add("Download error: ${e.localizedMessage}")
             } finally {
-                importResult = ImportResult(successCount, errorCount, errors, false, true)
+                importResult = ImportResult(successCount, errorCount, errors, false, true, process = "Histories")
             }
         }
     }

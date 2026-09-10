@@ -2,6 +2,7 @@ package com.example.pamanareadandbill
 
 import android.content.Context
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,7 +80,7 @@ class FindingsViewModel(private val db: AppDatabase) : ViewModel(), ResettableIm
                 errorCount++
                 errors.add("Download error: ${e.localizedMessage}")
             } finally {
-                importResult = ImportResult(successCount, errorCount, errors, false, true)
+                importResult = ImportResult(successCount, errorCount, errors, false, true, process="Findings")
             }
         }
     }
@@ -197,7 +198,7 @@ class RatesViewModel(private val db: AppDatabase) : ViewModel(), ResettableImpor
                 errorCount++
                 errors.add("Download error: ${e.localizedMessage}")
             } finally {
-                importResult = ImportResult(successCount, errorCount, errors, false, true)
+                importResult = ImportResult(successCount, errorCount, errors, false, true, process="Rates")
             }
         }
     }
@@ -250,7 +251,7 @@ class RatesViewModel(private val db: AppDatabase) : ViewModel(), ResettableImpor
             errorCount++
             errors.add("File error: ${e.localizedMessage}")
         } finally {
-            importResult = ImportResult(successCount, errorCount, errors, false, true)
+            importResult = ImportResult(successCount, errorCount, errors, false, true, process="Rates")
         }
     }
 }
@@ -313,7 +314,7 @@ class ReadersViewModel(private val db: AppDatabase) : ViewModel(), ResettableImp
                 errorCount++
                 errors.add("Download error: ${e.localizedMessage}")
             } finally {
-                importResult = ImportResult(successCount, errorCount, errors, false, true)
+                importResult = ImportResult(successCount, errorCount, errors, false, true, process="Readers")
             }
         }
     }
@@ -358,7 +359,7 @@ class ReadersViewModel(private val db: AppDatabase) : ViewModel(), ResettableImp
             errorCount++
             errors.add("File error: ${e.localizedMessage}")
         } finally {
-            importResult = ImportResult(successCount, errorCount, errors, false, true)
+            importResult = ImportResult(successCount, errorCount, errors, false, true, process="Readers")
         }
     }
 }
