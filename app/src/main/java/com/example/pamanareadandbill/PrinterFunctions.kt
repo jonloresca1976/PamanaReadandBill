@@ -5,6 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.os.Environment
 import android.widget.Toast
+//import androidx.activity.result.launch
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import java.io.File
 import java.io.IOException
 
@@ -238,6 +242,14 @@ fun printBill(context: Context, viewModel: CustomerViewModel) {
         // Optional: Redirect to Play Store
         // val playStoreIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=mate.bluetoothprint"))
         // context.startActivity(playStoreIntent)
+    }
+
+    val db = DatabaseProvider.getDatabase(context)
+    val srvcNmbr = viewModel.customers[viewModel.currentIndex].srvc_nmbr
+
+    // Launch a coroutine to update the DB in the background
+    CoroutineScope(Dispatchers.IO).launch {
+        db.meterReadingDao().incrementPrintCount(srvcNmbr)
     }
 }
 

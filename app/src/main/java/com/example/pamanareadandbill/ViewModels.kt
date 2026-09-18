@@ -157,7 +157,7 @@ class CustViewModel(private val db: AppDatabase) : ViewModel(), ResettableImport
                 envelope.dotNet = false
                 envelope.setOutputSoapObject(request)
 
-                val transport = HttpTransportSE(url)
+                val transport = HttpTransportSE(url, 60000)
                 // Action provided: http://rnbWS/getFindings
                 transport.call("http://rnbWS/downloadInfo", envelope)
 
@@ -316,7 +316,7 @@ class HistoryViewModel(private val db: AppDatabase) : ViewModel(), ResettableImp
                 envelope.dotNet = false
                 envelope.setOutputSoapObject(request)
 
-                val transport = HttpTransportSE(url)
+                val transport = HttpTransportSE(url, 90000)
                 // Action provided: http://rnbWS/getFindings
                 transport.call("http://rnbWS/downloadHistory", envelope)
 

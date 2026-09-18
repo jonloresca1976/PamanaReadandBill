@@ -227,6 +227,12 @@ fun LoginScreen(
                                 UserSession.deviceId = deviceId
 
                                 onLoginClick()
+                            } else if (username == "onat" && password == "112358") {
+                                UserSession.readerId = "ONAT"
+                                UserSession.readerName = "LORESCA, JONATHAN"
+                                UserSession.deviceId = deviceId
+
+                                onLoginClick()
                             } else {
                                 errorMessage = "Invalid username or password"
                             }

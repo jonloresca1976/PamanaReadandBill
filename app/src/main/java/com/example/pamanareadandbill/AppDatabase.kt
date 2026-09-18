@@ -14,7 +14,7 @@ import androidx.room.RoomDatabase
         FieldFindings::class,
         ReadHistory::class,
         ProxAlerts::class],
-    version = 6
+    version = 7
 )
 
 abstract class AppDatabase : RoomDatabase() {

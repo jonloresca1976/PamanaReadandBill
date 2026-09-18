@@ -117,6 +117,12 @@ interface MeterReadingDao {
     @Query("DELETE FROM MeterReading")
     suspend fun deleteAllMeterReading(): Int
 
+    //------------------------------------------------
+    // For updating number of times printed
+    //------------------------------------------------
+    @Query("UPDATE MeterReading SET numb_print = numb_print + 1 WHERE srvc_nmbr = :srvc_nmbr")
+    suspend fun incrementPrintCount(srvc_nmbr: String)
+    //------------------------------------------------
 }
 
 @Dao
@@ -141,5 +147,4 @@ interface MeterReaderDao {
 
     @Query("DELETE FROM MeterReaders")
     suspend fun deleteAllMeterReaders(): Int
-
 }

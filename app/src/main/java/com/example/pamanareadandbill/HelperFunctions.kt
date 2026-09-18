@@ -73,9 +73,15 @@ suspend fun saveReading(viewModel: CustomerViewModel, db: AppDatabase) {
         val currentCustomer = viewModel.customers[viewModel.currentIndex]
         var readingData = db.meterReadingDao().getMeterReading(currentCustomer.srvc_nmbr)
 
+        // 1. Fetch existing record to check current counts
+        val existingData = db.meterReadingDao().getMeterReading(currentCustomer.srvc_nmbr)
+
+        val sdf = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault())
+        val currentDateTime = sdf.format(java.util.Date())
+
         readingData = MeterReading(
             srvc_nmbr = currentCustomer.srvc_nmbr,
-            read_date = "2026-03-01", // TODO: Add real date later
+            read_date = UserSession.readDate ?: "0000-00-00",
             prev_rdng = currentCustomer.prev_rdng,
             pres_rdng = viewModel.reading.toIntOrNull() ?: 0,
             consume = viewModel.consumption.toIntOrNull() ?: 0,
@@ -88,15 +94,15 @@ suspend fun saveReading(viewModel: CustomerViewModel, db: AppDatabase) {
                     currentCustomer.amt_aro,
             field_findings = viewModel.selectedFinding,
             remarks = viewModel.remarks,
-            reader = "JONATHAN",
-            numb_tries = 0,
-            numb_print = 0,
-            read_time = "2026-03-01",
+            reader = UserSession.readerId ?: "Unknown",
+            numb_tries = (existingData?.numb_tries ?: 0) + 1,
+            numb_print = existingData?.numb_print ?: 0,
+            read_time = currentDateTime,
             read_loc = " ",
             loc_update = " ",
-            device_id = "ABC123 "
+            device_id = UserSession.deviceId ?: "Unknown"
         )
-        db.meterReadingDao().insertMeterReading(readingData!!)
+        db.meterReadingDao().insertMeterReading(readingData)
         viewModel.isModified = false
     }
 }
