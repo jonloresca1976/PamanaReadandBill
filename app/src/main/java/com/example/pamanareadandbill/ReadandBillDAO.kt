@@ -102,6 +102,9 @@ interface MeterReadingDao {
     @Query("SELECT * FROM MeterReading ORDER BY srvc_nmbr, read_date")
     fun getAllMeterReading(): Flow<List<MeterReading>>
 
+    @Query("SELECT * FROM MeterReading")
+    suspend fun getAllReadingsList(): List<MeterReading>
+
     @Query("SELECT * FROM MeterReading WHERE srvc_nmbr = :srvc_nmbr LIMIT 1")
     suspend fun getMeterReading(srvc_nmbr: String): MeterReading?
 

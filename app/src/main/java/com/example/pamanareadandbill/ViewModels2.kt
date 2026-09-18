@@ -367,3 +367,75 @@ class ReadersViewModel(private val db: AppDatabase) : ViewModel(), ResettableImp
 class ReadersViewModelFactory(private val db: AppDatabase) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T = ReadersViewModel(db) as T
 }
+
+class UploadViewModelFactory(private val db: AppDatabase) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T = UploadViewModel(db) as T
+}
+
+class UploadViewModel(private val db: AppDatabase) : ViewModel() {
+    var isUploading by mutableStateOf(false)
+    var uploadStatus by mutableStateOf("")
+
+    fun uploadReadings() {
+
+        viewModelScope.launch {
+            isUploading = true
+            uploadStatus = "Uploading..."
+
+            val result = withContext(Dispatchers.IO) {
+                try {
+                    val readings = db.meterReadingDao().getAllReadingsList()
+                    if (readings.isEmpty()) return@withContext "No readings to upload."
+
+                    // 1. Prepare Data String (Delimited by $ and |)
+                    val sb = StringBuilder()
+
+                    // Header: reader_id, reading_date, zone
+                    val header = listOf(
+                        UserSession.readerId ?: "",
+                        UserSession.readDate ?: "",
+                        UserSession.zone ?: "" // Replace with actual zone if available
+                    ).joinToString("$")
+                    sb.append("$header|")
+
+                    // Records: srvc_nmbr, read_date, prev_rdng, pres_rdng, consume, peso_value,
+                    // amt_arr, amt_others, field_findings, remarks, reader_id, numb_tries,
+                    // numb_print, read_time, read_loc, loc_update
+                    readings.forEach { r ->
+                        val record = listOf(
+                            r.srvc_nmbr, r.read_date, r.prev_rdng, r.pres_rdng, r.consume,
+                            r.peso_value, r.amt_arr, r.amt_others, r.field_findings, r.remarks,
+                            r.reader, r.numb_tries, r.numb_print, r.read_time, r.read_loc, r.loc_update, r.device_id
+                        ).joinToString("$")
+                        sb.append("$record|")
+                    }
+
+                    val finalData = sb.toString().removeSuffix("|")
+
+                    // 2. SOAP Request Construction
+                    val ip = UserSession.ipAddr ?: "127.0.0.1"
+                    val port = UserSession.svrPort ?: "8080"
+                    val url = "http://$ip:$port/RnBWebService/services/ReadBill"
+
+                    val request = SoapObject("http://rnbWS", "uploadReadings")
+                    request.addProperty("readingData", finalData)
+
+                    val envelope = SoapSerializationEnvelope(SoapEnvelope.VER11)
+                    envelope.dotNet = false
+                    envelope.setOutputSoapObject(request)
+
+                    // 3. Execution
+                    val transport = HttpTransportSE(url, 300000) // 5Min timeout
+                    transport.call("http://rnbWS/uploadReadings", envelope)
+
+                    envelope.response?.toString() ?: "No response from server."
+                } catch (e: Exception) {
+                    "Update failed. ${e.localizedMessage}"
+                }
+            }
+
+            uploadStatus = result
+            isUploading = false
+        }
+    }
+}

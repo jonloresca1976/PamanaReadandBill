@@ -15,6 +15,7 @@ object UserSession {
     var dbPort: String? = null
     var dbUser: String? = null
     var dbPassword: String? = null
+    var zone: String? = null
 
     /**
      * Call this when the user logs out to clear sensitive data.
@@ -31,6 +32,7 @@ object UserSession {
         dbPort = null
         dbUser = null
         dbPassword = null
+        zone = null
 
     }
 }

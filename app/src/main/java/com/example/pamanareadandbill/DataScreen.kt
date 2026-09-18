@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -334,7 +335,41 @@ fun DownloadTabContentPreview() {
 
 @Composable
 fun UploadTabContent() {
-    Text("Upload Tab Content")
+    val context = LocalContext.current
+    val db = DatabaseProvider.getDatabase(context)
+    val uploadViewModel: UploadViewModel = viewModel(factory = UploadViewModelFactory(db))
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        if (uploadViewModel.isUploading) {
+            CircularProgressIndicator()
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Uploading...")
+        } else {
+            Button(
+                onClick = { uploadViewModel.uploadReadings() },
+                modifier = Modifier.width(300.dp)
+            ) {
+                Text("Upload Readings")
+            }
+
+            if (uploadViewModel.uploadStatus.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = uploadViewModel.uploadStatus,
+                    color = if (uploadViewModel.uploadStatus.contains("success"))
+                        MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
 }
 
 @Composable

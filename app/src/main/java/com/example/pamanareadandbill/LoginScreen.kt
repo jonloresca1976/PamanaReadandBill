@@ -57,6 +57,7 @@ fun LoginScreen(
     UserSession.dbPassword = prefs.getString("db_password", "") ?: ""
     UserSession.readDate = prefs.getString("read_date", "") ?: ""
     UserSession.dueDate = prefs.getString("due_date", "") ?: ""
+    UserSession.zone = prefs.getString("zone", "") ?: "00"
     //-------------------------------------------------------
 
     val deviceTypes = listOf(

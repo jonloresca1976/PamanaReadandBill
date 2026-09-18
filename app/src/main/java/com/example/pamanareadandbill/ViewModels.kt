@@ -157,15 +157,16 @@ class CustViewModel(private val db: AppDatabase) : ViewModel(), ResettableImport
                 envelope.dotNet = false
                 envelope.setOutputSoapObject(request)
 
-                val transport = HttpTransportSE(url, 60000)
+                val transport = HttpTransportSE(url, 90000)
                 // Action provided: http://rnbWS/getFindings
                 transport.call("http://rnbWS/downloadInfo", envelope)
-
+                var first = true
                 val response = envelope.response?.toString() ?: ""
                 if (response.isNotBlank()) {
                     val records = response.split("|")
                     val batch = mutableListOf<CustomerInfo>()
                     db.customerDao().deleteAll()
+                    db.meterReadingDao().deleteAllMeterReading()
                     records.forEach { record ->
                         if (record.isNotBlank()) {
                             val parts = record.split("$")
@@ -182,6 +183,15 @@ class CustViewModel(private val db: AppDatabase) : ViewModel(), ResettableImport
                                     stat_code = parts[15], location = parts[18], s_citizen = parts[20],
                                     s_expire = " ", chk_sum = 0.00
                                 ))
+                                if (first) {
+                                    val prefs = context.getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
+                                    prefs.edit().apply {
+                                        putString("zone", parts[1].take(2))
+                                        apply() // apply() is asynchronous and safe for background threads
+                                    }
+                                    UserSession.zone = parts[1].take(2)
+                                    first = false
+                                }
                                 successCount++
                             } else {
                                 UserSession.readDate = parts[1]
